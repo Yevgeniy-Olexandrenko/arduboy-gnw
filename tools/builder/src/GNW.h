@@ -23,6 +23,7 @@ public:
 public:
 	GNW(const std::string& name);
 	const std::string& GetName() const;
+	const std::string& GetCodePath() const;
 	const std::string& GetAssetsPath() const;
 	const std::string  GetAssetPath(const std::string& type) const;
 	const Config& GetConfig() const;
@@ -32,6 +33,7 @@ private:
 
 private:
 	std::string m_name;
+	std::string m_code;
 	std::string m_assets;
 	Config m_config;
 };

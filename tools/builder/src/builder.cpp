@@ -4,6 +4,7 @@
 #include <svg.h>
 
 #include "GNW.h"
+#include "Dump.h"
 #include "Image.h"
 #include "builder.h"
 
@@ -199,9 +200,74 @@ bool PrepareForPixelArt(const GNW& gnw)
 
 bool CompileAssets(const GNW& gnw)
 {
+    std::cout << "compile assets: " << gnw.GetName() << std::endl;
+
+    Dump dump;
+    int segments = dump.AddSection(gnw.GetName() + "_segments", "Display segments");
+    int graphics = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics");
+    int firmware = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
+    int controls = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
+    std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
+
+    // -------------------------------------------------------------------------
+
     // TODO
 
-    return false;
+    // -------------------------------------------------------------------------
+    std::cout << "\tappend firmware data" << std::endl;
+   
+    dump[firmware].Append(gnw.GetConfig().rom);
+
+    // -------------------------------------------------------------------------
+    std::cout << "\tappend controls data" << std::endl;
+
+    static const std::vector<std::string> c_names
+    {
+        "acl", "time", "game_b", "game_a", "alarm",
+        "right_down", "right_up", "left_down", "left_up", "right", "left",
+        "cheat"
+    };
+    static const std::vector<std::string> c_signals
+    {
+        "gnd", "vcc", "mcu_r2", "mcu_r3", "mcu_r4"
+    };
+    static const std::vector<std::string> c_inputs
+    {
+        "mcu_acl", "mcu_k1", "mcu_k2", "mcu_k3", "mcu_k4", "mcu_alpha", "mcu_beta"
+    };
+    auto index = [](const std::vector<std::string>& strings, const std::string string) -> int
+    {
+        for (size_t i = 0; i < strings.size(); ++i)
+        {
+            if (strings[i] == string) return int(i);
+        }
+        return -1;
+    };
+
+    std::string keys = "keys:";
+    for (auto& key : gnw.GetConfig().keys)
+    {
+        int nIdx = index(c_names, key.name);
+        int sIdx = index(c_signals, key.signal);
+        int iIdx = index(c_inputs, key.input);
+
+        if (nIdx >= 0 && sIdx >= 0 && iIdx >= 0)
+        {
+            dump[controls].Append(uint8_t(nIdx));
+            dump[controls].Append(uint8_t(sIdx << 4 | iIdx));
+            keys = keys + " " + key.name;
+        }
+    }
+    dump[controls].AddComment(keys);
+    dump[controls].AddSize();
+
+    // -------------------------------------------------------------------------
+
+    std::cout << "\t\tsave to " << hppFile << std::endl;
+    dump.Save(hppFile);
+
+    std::cout << std::endl;
+    return true;
 }
 
 int main(int argc, char* argv[])

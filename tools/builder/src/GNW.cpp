@@ -15,6 +15,7 @@ namespace
 
 GNW::GNW(const std::string& name)
 	: m_name(name)
+	, m_code(c_path + name + "/")
 	, m_assets(c_path + name + "/assets/")
 {
 	ParseConfig(GetAssetPath("ini"));
@@ -23,6 +24,11 @@ GNW::GNW(const std::string& name)
 const std::string& GNW::GetName() const
 {
 	return m_name;
+}
+
+const std::string& GNW::GetCodePath() const
+{
+	return m_code;
 }
 
 const std::string& GNW::GetAssetsPath() const
