@@ -1,0 +1,305 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{0e6d351d-55c0-4873-bc10-2828d3f8eea2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{fe56664a-5846-44a9-bde0-b696194d96a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\lpng">
+      <UniqueIdentifier>{6fdf1373-3183-4fa1-91cb-b51835c8a23e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\nanosvg">
+      <UniqueIdentifier>{6313c67d-e70a-40a8-a66c-e649830b91d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\pngpp">
+      <UniqueIdentifier>{e2bae7e6-69ca-4a26-85c5-cf1b7d5422f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\zip">
+      <UniqueIdentifier>{6375d6a6-00fe-4795-9f88-8376f26e02be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\zlib">
+      <UniqueIdentifier>{bfe07b50-346d-4050-b653-247a45ce6fb4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\lib\lpng\png.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngerror.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pnggccrd.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngget.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngmem.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngpread.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngread.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngrio.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngrtran.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngrutil.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngset.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngtrans.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngvcrd.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngwio.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngwrite.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngwtran.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lpng\pngwutil.c">
+      <Filter>Libraries\lpng</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\nanosvg\svg.cpp">
+      <Filter>Libraries\nanosvg</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\builder.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\adler32.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\compress.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\crc32.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\deflate.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\gzclose.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\gzlib.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\gzread.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\gzwrite.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\infback.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\inffast.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\inflate.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\inftrees.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\trees.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\uncompr.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zlib\zutil.c">
+      <Filter>Libraries\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zip\ioapi.c">
+      <Filter>Libraries\zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zip\unzip.c">
+      <Filter>Libraries\zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\zip\zip.c">
+      <Filter>Libraries\zip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Image.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\lib\lpng\png.h">
+      <Filter>Libraries\lpng</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lpng\pngconf.h">
+      <Filter>Libraries\lpng</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\nanosvg\nanosvg.h">
+      <Filter>Libraries\nanosvg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\nanosvg\nanosvgrast.h">
+      <Filter>Libraries\nanosvg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\nanosvg\svg.h">
+      <Filter>Libraries\nanosvg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\color.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\config.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\consumer.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\convert_color_space.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\end_info.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\error.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\ga_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\generator.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\gray_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\image.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\image_info.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\index_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\info.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\info_base.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\io_base.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\packed_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\palette.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\pixel_buffer.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\pixel_traits.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\png.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\reader.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\require_color_space.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\rgb_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\rgba_pixel.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\solid_pixel_buffer.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\streaming_base.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\tRNS.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\types.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\pngpp\writer.hpp">
+      <Filter>Libraries\pngpp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\crc32.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\deflate.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\gzguts.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\inffast.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\inffixed.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\inflate.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\inftrees.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\trees.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\zconf.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\zlib.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zlib\zutil.h">
+      <Filter>Libraries\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zip\crypt.h">
+      <Filter>Libraries\zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zip\ioapi.h">
+      <Filter>Libraries\zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zip\unzip.h">
+      <Filter>Libraries\zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\zip\zip.h">
+      <Filter>Libraries\zip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Image.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\lib\lpng\version.txt">
+      <Filter>Libraries\lpng</Filter>
+    </Text>
+    <Text Include="..\lib\pngpp\version.txt">
+      <Filter>Libraries\pngpp</Filter>
+    </Text>
+    <Text Include="..\lib\zlib\version.txt">
+      <Filter>Libraries\zlib</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
