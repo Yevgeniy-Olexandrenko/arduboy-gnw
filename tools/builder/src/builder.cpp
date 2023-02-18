@@ -47,6 +47,7 @@ bool PrepareForPixelArt(const GNW& gnw)
     std::string svgFile = gnw.GetAssetPath("svg");
     std::string pxlFile = gnw.GetAssetPath("pixels.png");
     std::string refFile = gnw.GetAssetPath("reference.png");
+    std::string dumFile = gnw.GetAssetPath("png");
 
     NSVGimage* svgImage = nullptr;
     NSVGrasterizer* svgRasterizer = nullptr;
@@ -80,7 +81,7 @@ bool PrepareForPixelArt(const GNW& gnw)
         auto svgOffY  = std::floorf((imgH - svgImage->height * svgScale) / 2);
 
         // ---------------------------------------------------------------------
-        std::cout << "\trender pixels layer asset" << std::endl;
+        std::cout << "\trender pixels layer" << std::endl;
 
         Image imgLcd(imgW, imgH, true);
         Image::Pixel lcdEdge(0xFF, 0x00, 0x00, 0x7F);
@@ -117,9 +118,11 @@ bool PrepareForPixelArt(const GNW& gnw)
         imgLcd.Save(pxlFile);
         
         // ---------------------------------------------------------------------
-        std::cout << "\trender reference layer asset" << std::endl;
+        std::cout << "\trender reference layer" << std::endl;
+        std::cout << "\trender dummy display" << std::endl;
 
         Image imgSeg(imgW, imgH, true);
+        Image imgDum(lcdW, lcdH, true);
         Image::Format format(2, 2, 2, 1, Image::DitheringNone, Image::DitheringNone);
 
         for (auto& pair : segments)
@@ -179,10 +182,49 @@ bool PrepareForPixelArt(const GNW& gnw)
                     }
                 }
             }
+
+            // segment on dummy display
+            for (auto shape : shapes)
+            {
+                auto x0 = int(svgOffX + shape->bounds[0] * svgScale) / pxlS;
+                auto y0 = int(svgOffY + shape->bounds[1] * svgScale) / pxlS - gnw.GetConfig().exp;
+                auto x1 = int(svgOffX + shape->bounds[2] * svgScale) / pxlS;
+                auto y1 = int(svgOffY + shape->bounds[3] * svgScale) / pxlS - gnw.GetConfig().exp;
+
+                for (int y = y0; y <= y1; ++y)
+                {
+                    for (int x = x0; x <= x1; ++x)
+                    {
+                        imgDum.SetPixel(x, y, color);
+                    }
+                }
+            }
+        }
+
+        // graphics on dummy display
+        srand(0);
+        Image::Pixel black(0,0, 0, 0xFF);
+        for (int i = 0; i < 30; ++i)
+        {
+            int x = rand() % lcdW;
+            int y = rand() % lcdH;
+            int x0 = std::max(x - 3, 0);
+            int y0 = std::max(y - 3, 0);
+            int x1 = std::min(x + 3, lcdW - 1);
+            int y1 = std::min(y + 3, lcdH - 1);
+            for (int yy = y0; yy <= y1; ++yy)
+                if (imgDum.GetPixel(x, yy).m_a == 0)
+                    imgDum.SetPixel(x, yy, black);
+            for (int xx = x0; xx <= x1; ++xx)
+                if (imgDum.GetPixel(xx, y).m_a == 0)
+                    imgDum.SetPixel(xx, y, black);
         }
 
         std::cout << "\t\tsave to " << refFile << std::endl;
         imgSeg.Save(refFile);
+
+        std::cout << "\t\tsave to " << dumFile << std::endl;
+        imgDum.Save(dumFile);
 
         nsvgDelete(svgImage);
         nsvgDeleteRasterizer(svgRasterizer);
