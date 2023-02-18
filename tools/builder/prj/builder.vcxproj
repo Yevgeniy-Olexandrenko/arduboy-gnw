@@ -56,6 +56,7 @@
     <ClCompile Include="..\lib\zlib\uncompr.c" />
     <ClCompile Include="..\lib\zlib\zutil.c" />
     <ClCompile Include="..\src\builder.cpp" />
+    <ClCompile Include="..\src\GNW.cpp" />
     <ClCompile Include="..\src\Image.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +109,7 @@
     <ClInclude Include="..\lib\zlib\zconf.h" />
     <ClInclude Include="..\lib\zlib\zlib.h" />
     <ClInclude Include="..\lib\zlib\zutil.h" />
+    <ClInclude Include="..\src\GNW.h" />
     <ClInclude Include="..\src\Image.h" />
   </ItemGroup>
   <ItemGroup>

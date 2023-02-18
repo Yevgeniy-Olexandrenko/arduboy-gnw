@@ -2,6 +2,8 @@
 #include <vector>
 #include <map>
 #include <svg.h>
+
+#include "GNW.h"
 #include "Image.h"
 
 // -----------------------------------------------------------------------------
@@ -19,7 +21,7 @@ using SegmentsMap   = std::map<std::string, SegmentShapes>;
 
 void HSVtoRGB(float H, float S, float V, int& R, int& G, int& B) 
 {
-    if (H > 360 || H < 0 || S>100 || S < 0 || V>100 || V < 0) 
+    if (H > 360 || H < 0 || S > 100 || S < 0 || V> 100 || V < 0) 
     {
         std::cout << "The givem HSV values are not in valid range" << std::endl;
         return;
@@ -28,7 +30,7 @@ void HSVtoRGB(float H, float S, float V, int& R, int& G, int& B)
     float s = S / 100;
     float v = V / 100;
     float C = s * v;
-    float X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+    float X = C * (1 - abs(fmod(H / 60.f, 2) - 1));
     float m = v - C;
     float r, g, b;
 
@@ -39,18 +41,18 @@ void HSVtoRGB(float H, float S, float V, int& R, int& G, int& B)
     else if (H >= 240 && H < 300) { r = X, g = 0, b = C; }
     else                          { r = C, g = 0, b = X; }
 
-    R = (r + m) * 255;
-    G = (g + m) * 255;
-    B = (b + m) * 255;
+    R = int((r + m) * 255);
+    G = int((g + m) * 255);
+    B = int((b + m) * 255);
 }
 
-void PrepareForPixelArt(const std::string& gnw, int expH)
+void PrepareForPixelArt(const GNW& gnw)
 {
-    std::cout << "prepare for pixel art: " << gnw << std::endl;
+    std::cout << "prepare for pixel art: " << gnw.GetName() << std::endl;
 
-    std::string svgFile = path + gnw + "/assets/" + gnw + ".svg";
-    std::string pxlFile = path + gnw + "/assets/" + gnw + ".pixels.png";
-    std::string refFile = path + gnw + "/assets/" + gnw + ".reference.png";
+    std::string svgFile = gnw.GetAssetPath("svg");
+    std::string pxlFile = gnw.GetAssetPath("pixels.png");
+    std::string refFile = gnw.GetAssetPath("reference.png");
 
     NSVGimage* svgImage = nsvgParseFromFile(svgFile.c_str(), "px", 96.0f);
     NSVGrasterizer* svgRasterizer = nsvgCreateRasterizer();
@@ -74,13 +76,13 @@ void PrepareForPixelArt(const std::string& gnw, int expH)
         std::cout << "\tfound " << segments.size() << " segments" << std::endl;
         // ---------------------------------------------------------------------
 
-        auto ratio = (float(lcdW) / float(lcdH + 2 * expH));
-        auto imgW = int(pxlS * lcdW);
-        auto imgH = int(pxlS * lcdW / ratio);
+        auto ratio = float(lcdW) / float(lcdH + 2 * gnw.GetConfig().exp);
+        auto imgW  = size_t(pxlS * lcdW);
+        auto imgH  = size_t(pxlS * lcdW / ratio);
 
         auto svgScale = std::min(imgW / svgImage->width, imgH / svgImage->height);
-        auto svgOffX = int((imgW - svgImage->width * svgScale) / 2);
-        auto svgOffY = int((imgH - svgImage->height * svgScale) / 2);
+        auto svgOffX  = std::floorf((imgW - svgImage->width  * svgScale) / 2);
+        auto svgOffY  = std::floorf((imgH - svgImage->height * svgScale) / 2);
 
         // ---------------------------------------------------------------------
         std::cout << "\trender pixels layer asset" << std::endl;
@@ -90,12 +92,12 @@ void PrepareForPixelArt(const std::string& gnw, int expH)
         Image::Pixel lcdCent(0x00, 0xFF, 0xFF, 0x7F);
         Image::Pixel lcdGrid(0x7F, 0x7F, 0x7F, 0x7F);
 
-        int topEdge = (((imgH / pxlS) - lcdH) / 2) * pxlS;
-        int botEdge = topEdge + lcdH * pxlS;
+        size_t topEdge = (((imgH / pxlS) - lcdH) / 2) * pxlS;
+        size_t botEdge = topEdge + lcdH * pxlS;
 
-        for (int y = 0; y < imgLcd.GetH(); ++y)
+        for (size_t y = 0; y < imgLcd.GetH(); ++y)
         {
-            for (int x = 0; x < imgLcd.GetW(); ++x)
+            for (size_t x = 0; x < imgLcd.GetW(); ++x)
             {
                 if (y < topEdge || y >= botEdge)
                 {
@@ -142,21 +144,21 @@ void PrepareForPixelArt(const std::string& gnw, int expH)
             Image::Pixel color(R, G, B, 0xFF);
 
             // boundaries
-            float x0 = shapes[0]->bounds[0];
-            float y0 = shapes[0]->bounds[1];
-            float x1 = shapes[0]->bounds[2];
-            float y1 = shapes[0]->bounds[3];
+            float tx = shapes[0]->bounds[0];
+            float ty = shapes[0]->bounds[1];
+            float bx = shapes[0]->bounds[2];
+            float by = shapes[0]->bounds[3];
             for (auto shape : shapes)
             {
-                x0 = std::min(x0, shape->bounds[0]);
-                y0 = std::min(y0, shape->bounds[1]);
-                x1 = std::max(x1, shape->bounds[2]);
-                y1 = std::max(y1, shape->bounds[3]);
+                tx = std::min(tx, shape->bounds[0]);
+                ty = std::min(ty, shape->bounds[1]);
+                bx = std::max(bx, shape->bounds[2]);
+                by = std::max(by, shape->bounds[3]);
             }
-            x0 = int(svgOffX + x0 * svgScale);
-            y0 = int(svgOffY + y0 * svgScale);
-            x1 = int(svgOffX + x1 * svgScale);
-            y1 = int(svgOffY + y1 * svgScale);
+            int x0 = int(svgOffX + tx * svgScale);
+            int y0 = int(svgOffY + ty * svgScale);
+            int x1 = int(svgOffX + bx * svgScale);
+            int y1 = int(svgOffY + by * svgScale);
 
             // temporary segment
             Image imgTmp(imgW, imgH, true);
@@ -197,7 +199,7 @@ void PrepareForPixelArt(const std::string& gnw, int expH)
 
 int main()
 {
-    PrepareForPixelArt("gnw_ball",    7);
-    PrepareForPixelArt("gnw_octopus", 5);
-    PrepareForPixelArt("gnw_mmouse",  5);
+    PrepareForPixelArt(GNW("gnw_ball"));
+    PrepareForPixelArt(GNW("gnw_octopus"));
+    PrepareForPixelArt(GNW("gnw_mmouse"));
 }

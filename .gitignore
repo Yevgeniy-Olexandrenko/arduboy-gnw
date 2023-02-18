@@ -1,3 +1,5 @@
 tools/builder/prj/.vs
 tools/builder/prj/Debug
 tools/builder/prj/Release
+*.pixels.png
+*.reference.png
