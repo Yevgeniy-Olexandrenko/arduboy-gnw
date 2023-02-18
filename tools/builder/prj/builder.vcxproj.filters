@@ -296,6 +296,9 @@
     <ClInclude Include="..\src\GNW.h">
       <Filter>Sources</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\builder.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\lib\lpng\version.txt">

@@ -5,14 +5,7 @@
 
 #include "GNW.h"
 #include "Image.h"
-
-// -----------------------------------------------------------------------------
-
-const std::string path = "../../games/";
-
-const int lcdW = 128;
-const int lcdH = 64;
-const int pxlS = 4;
+#include "builder.h"
 
 // -----------------------------------------------------------------------------
 
@@ -46,7 +39,7 @@ void HSVtoRGB(float H, float S, float V, int& R, int& G, int& B)
     B = int((b + m) * 255);
 }
 
-void PrepareForPixelArt(const GNW& gnw)
+bool PrepareForPixelArt(const GNW& gnw)
 {
     std::cout << "prepare for pixel art: " << gnw.GetName() << std::endl;
 
@@ -54,11 +47,12 @@ void PrepareForPixelArt(const GNW& gnw)
     std::string pxlFile = gnw.GetAssetPath("pixels.png");
     std::string refFile = gnw.GetAssetPath("reference.png");
 
-    NSVGimage* svgImage = nsvgParseFromFile(svgFile.c_str(), "px", 96.0f);
-    NSVGrasterizer* svgRasterizer = nsvgCreateRasterizer();
+    NSVGimage* svgImage = nullptr;
+    NSVGrasterizer* svgRasterizer = nullptr;
 
-    if (svgImage)
+    if (svgImage = nsvgParseFromFile(svgFile.c_str(), "px", 96.0f))
     {
+        svgRasterizer = nsvgCreateRasterizer();
         svgImage->shapes->fill.color = 0;
 
         // ---------------------------------------------------------------------
@@ -188,18 +182,49 @@ void PrepareForPixelArt(const GNW& gnw)
 
         std::cout << "\t\tsave to " << refFile << std::endl;
         imgSeg.Save(refFile);
+
+        nsvgDelete(svgImage);
+        nsvgDeleteRasterizer(svgRasterizer);
+
+        std::cout << std::endl;
+        return true;
     }
-    else
-    {
-        std::cout << "ERROR: could not open SVG!" << std::endl;
-        std::cout << svgFile << std::endl;
-    }
+    
+    std::cout << "ERROR: could not open SVG!" << std::endl;
+    std::cout << svgFile << std::endl;
+
     std::cout << std::endl;
+    return false;
 }
 
-int main()
+bool CompileAssets(const GNW& gnw)
 {
-    PrepareForPixelArt(GNW("gnw_ball"));
-    PrepareForPixelArt(GNW("gnw_octopus"));
-    PrepareForPixelArt(GNW("gnw_mmouse"));
+    // TODO
+
+    return false;
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc == 2)
+    {
+        std::string command = argv[1];
+        if (command == "prepare-for-pixelart")
+        {
+            for (const auto& game : games)
+            {
+                if (!PrepareForPixelArt(GNW(game))) return 1;
+            }
+            return 0;
+        }
+        if (command == "compile-assets")
+        {
+            for (const auto& game : games)
+            {
+                if (!CompileAssets(GNW(game))) return 1;
+            }
+            return 0;
+        }
+    }
+    return 1;
 }
