@@ -37,10 +37,10 @@ struct Segment
     void SetByRGB(int R, int G, int B)
     {
         float H, S, V;
-        RGBtoHSV(R, B, G, H, S, V);
-        o = int(9.f * H / 360.f);
-        s = int(3.f * (V - 25.f) / 75.f);
-        h = int(1.f * (S - 25.f) / 75.f);
+        RGBtoHSV(R, G, B, H, S, V);
+        o = int(0.5f + 9.f * H / 360.f);
+        s = int(0.5f + 3.f * (V - 25.f) / 75.f);
+        h = int(0.5f + 1.f * (S - 25.f) / 75.f);
     }
 
     void GetAsSTR(std::string& str) const
@@ -52,11 +52,17 @@ struct Segment
         str[1] = str[3] = '.';
     }
 
+    void GetAsHSV(float& H, float& S, float& V) const
+    {
+        H = 360.f * float(o) / 9.f;
+        S = 25.f + 75.f * float(h) / 1.f;
+        V = 25.f + 75.f * float(s) / 3.f;
+    }
+
     void GetAsRGB(int& R, int& G, int& B) const
     {
-        float H = 360.f * float(o) / 9.f;
-        float S = 25.f + 75.f * float(h) / 1.f;
-        float V = 25.f + 75.f * float(s) / 3.f;
+        float H, S, V;
+        GetAsHSV(H, S, V);
         HSVtoRGB(H, S, V, R, G, B);
     }
 
@@ -71,9 +77,32 @@ struct Segment
         bounds.x1 = std::max(bounds.x1, x);
         bounds.y1 = std::max(bounds.y1, y);
     }
+
+    void Write(std::ostream& stream) const
+    {
+        std::string title;
+        GetAsSTR(title);
+        stream << title << ' ';
+
+        int R, G, B;
+        GetAsRGB(R, G, B);
+        stream << "RGB(" << R << ',' << G << ',' << B << ')' << ' ';
+
+        float H, S, V;
+        GetAsHSV(H, S, V);
+        stream << "HSV(" << H << ',' << S << ',' << V << ')' << std::endl;
+    }
 };
 
-using Segments = std::map<std::string, Segment>;
+void WriteSegments(const std::map<std::string, Segment>& segments, const std::string& file)
+{
+    std::ofstream stream(file);
+    for (auto& pair : segments)
+    {
+        pair.second.Write(stream);
+    }
+    stream.close();
+}
 
 // -----------------------------------------------------------------------------
 
@@ -85,6 +114,7 @@ bool PrepareForPixelArt(const GNW& gnw)
     std::string pxlFile = gnw.GetAssetPath("pixels.png");
     std::string refFile = gnw.GetAssetPath("reference.png");
     std::string dumFile = gnw.GetAssetPath("png");
+    std::string logFile = gnw.GetAssetsPath() + "segments.encoded.txt";
 
     NSVGimage* svgImage = nullptr;
     NSVGrasterizer* svgRasterizer = nullptr;
@@ -96,7 +126,7 @@ bool PrepareForPixelArt(const GNW& gnw)
 
         // ---------------------------------------------------------------------
        
-        Segments segments;
+        std::map<std::string, Segment> segments;
         for (NSVGshape* shape = svgImage->shapes; shape != nullptr; shape = shape->next)
         {
             std::string title = shape->title;
@@ -111,7 +141,9 @@ bool PrepareForPixelArt(const GNW& gnw)
             }
         }
 
-        std::cout << "\tfound " << segments.size() << " segments" << std::endl;
+        WriteSegments(segments, logFile);
+        std::cout << "\tencoded " << segments.size() << " segments" << std::endl;
+   
         // ---------------------------------------------------------------------
 
         auto ratio = float(lcdW) / float(lcdH + 2 * gnw.GetConfig().exp);
@@ -271,20 +303,56 @@ bool CompileAssets(const GNW& gnw)
     std::cout << "compile assets: " << gnw.GetName() << std::endl;
 
     Dump dump;
-    int segments = dump.AddSection(gnw.GetName() + "_segments", "Display segments");
-    int graphics = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics");
-    int firmware = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
-    int controls = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
+    int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Display segments");
+    int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics");
+    int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
+    int controlsSection = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
+
+    std::string pngFile = gnw.GetAssetPath("png");
     std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
+    std::string logFile = gnw.GetAssetsPath() + "segments.decoded.txt";
 
     // -------------------------------------------------------------------------
 
-    // TODO
+    Image lcdImg(pngFile, Image::Format8888);
+    if (lcdImg.GetW() != lcdW || lcdImg.GetH() != lcdH)
+    {
+        std::cout << "ERROR: defective display PNG!" << std::endl;
+        std::cout << pngFile << std::endl;
+
+        std::cout << std::endl;
+        return false;
+    }
+    
+    std::string title; Segment segment;
+    std::map<std::string, Segment> segments; 
+    for (int y = 0; y < lcdH; ++y)
+    {
+        for (int x = 0; x < lcdW; ++x)
+        {
+            Image::Pixel color = lcdImg.GetPixel(x, y);
+            if (color.m_a > 0 && (color.m_r > 0 || color.m_g > 0 || color.m_b > 0))
+            {
+                segment.SetByRGB(color.m_r, color.m_g, color.m_b);
+                segment.GetAsSTR(title);
+
+                if (segments.find(title) == segments.end())
+                {
+                    segments[title].SetBySTR(title);
+                }
+                segments[title].UpdateTL(float(x), float(y));
+                segments[title].UpdateBR(float(x), float(y));
+            }
+        }
+    }
+
+    WriteSegments(segments, logFile);
+    std::cout << "\tdecoded " << segments.size() << " segments" << std::endl;
 
     // -------------------------------------------------------------------------
     std::cout << "\tappend firmware data" << std::endl;
    
-    dump[firmware].Append(gnw.GetConfig().rom);
+    dump[firmwareSection].Append(gnw.GetConfig().rom);
 
     // -------------------------------------------------------------------------
     std::cout << "\tappend controls data" << std::endl;
@@ -321,13 +389,13 @@ bool CompileAssets(const GNW& gnw)
 
         if (nIdx >= 0 && sIdx >= 0 && iIdx >= 0)
         {
-            dump[controls].Append(uint8_t(nIdx));
-            dump[controls].Append(uint8_t(sIdx << 4 | iIdx));
+            dump[controlsSection].Append(uint8_t(nIdx));
+            dump[controlsSection].Append(uint8_t(sIdx << 4 | iIdx));
             keys = keys + " " + key.name;
         }
     }
-    dump[controls].AddComment(keys);
-    dump[controls].AddSize();
+    dump[controlsSection].AddComment(keys);
+    dump[controlsSection].AddSize();
 
     // -------------------------------------------------------------------------
 
