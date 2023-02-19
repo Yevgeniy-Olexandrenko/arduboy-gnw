@@ -58,6 +58,7 @@
     <ClCompile Include="..\src\builder.cpp" />
     <ClCompile Include="..\src\Dump.cpp" />
     <ClCompile Include="..\src\GNW.cpp" />
+    <ClCompile Include="..\src\HsvRgb.cpp" />
     <ClCompile Include="..\src\Image.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -113,6 +114,7 @@
     <ClInclude Include="..\src\builder.h" />
     <ClInclude Include="..\src\Dump.h" />
     <ClInclude Include="..\src\GNW.h" />
+    <ClInclude Include="..\src\HsvRgb.h" />
     <ClInclude Include="..\src\Image.h" />
   </ItemGroup>
   <ItemGroup>

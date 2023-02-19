@@ -144,6 +144,9 @@
     <ClCompile Include="..\src\Dump.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\HsvRgb.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lib\lpng\png.h">
@@ -303,6 +306,9 @@
       <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Dump.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\HsvRgb.h">
       <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>
