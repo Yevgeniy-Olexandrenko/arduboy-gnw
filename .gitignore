@@ -3,3 +3,4 @@ tools/builder/prj/Debug
 tools/builder/prj/Release
 *.pixels.png
 *.reference.png
+segments.*.txt
