@@ -11,8 +11,71 @@
 
 // -----------------------------------------------------------------------------
 
-using SegmentShapes = std::vector<NSVGshape*>;
-using SegmentsMap   = std::map<std::string, SegmentShapes>;
+struct Segment
+{
+    int o; // 0 - 8 => 4 bits
+    int s; // 0 - 3 => 2 bits
+    int h; // 0 - 1 => 1 bits
+
+    struct {
+        float x0 = +FLT_MAX;
+        float y0 = +FLT_MAX;
+        float x1 = -FLT_MAX;
+        float y1 = -FLT_MAX;
+    } bounds;
+
+    void SetBySTR(const std::string& str)
+    {
+        if (!str.empty() && str.size() == 5 && str[1] == '.' && str[3] == '.')
+        {
+            o = str[0] - '0';
+            s = str[2] - '0';
+            h = str[4] - '0';
+        }
+    }
+
+    void SetByRGB(int R, int G, int B)
+    {
+        float H, S, V;
+        RGBtoHSV(R, B, G, H, S, V);
+        o = int(9.f * H / 360.f);
+        s = int(3.f * (V - 25.f) / 75.f);
+        h = int(1.f * (S - 25.f) / 75.f);
+    }
+
+    void GetAsSTR(std::string& str) const
+    {
+        str.resize(5);
+        str[0] = o + '0';
+        str[2] = s + '0';
+        str[4] = h + '0';
+        str[1] = str[3] = '.';
+    }
+
+    void GetAsRGB(int& R, int& G, int& B) const
+    {
+        float H = 360.f * float(o) / 9.f;
+        float S = 25.f + 75.f * float(h) / 1.f;
+        float V = 25.f + 75.f * float(s) / 3.f;
+        HSVtoRGB(H, S, V, R, G, B);
+    }
+
+    void UpdateTL(float x, float y)
+    {
+        bounds.x0 = std::min(bounds.x0, x);
+        bounds.y0 = std::min(bounds.y0, y);
+    }
+
+    void UpdateBR(float x, float y)
+    {
+        bounds.x1 = std::max(bounds.x1, x);
+        bounds.y1 = std::max(bounds.y1, y);
+    }
+};
+
+using Segments = std::map<std::string, Segment>;
+
+// -----------------------------------------------------------------------------
 
 bool PrepareForPixelArt(const GNW& gnw)
 {
@@ -33,13 +96,18 @@ bool PrepareForPixelArt(const GNW& gnw)
 
         // ---------------------------------------------------------------------
        
-        SegmentsMap segments;
+        Segments segments;
         for (NSVGshape* shape = svgImage->shapes; shape != nullptr; shape = shape->next)
         {
             std::string title = shape->title;
             if (!title.empty() && title.size() == 5 && title[1] == '.' && title[3] == '.')
             {
-                segments[title].push_back(shape);
+                if (segments.find(title) == segments.end())
+                {
+                    segments[title].SetBySTR(title);
+                }
+                segments[title].UpdateTL(shape->bounds[0], shape->bounds[1]);
+                segments[title].UpdateBR(shape->bounds[2], shape->bounds[3]);
             }
         }
 
@@ -102,35 +170,7 @@ bool PrepareForPixelArt(const GNW& gnw)
         for (auto& pair : segments)
         {
             const std::string& title = pair.first;
-            const SegmentShapes& shapes = pair.second;
-
-            // color
-            int o = title[0] - '0'; // 0 - 8 => 4 bits
-            int s = title[2] - '0'; // 0 - 3 => 2 bits
-            int h = title[4] - '0'; // 0 - 1 => 1 bits
-            int R, G, B;
-            float H = 360.f * float(o) / 9.f;
-            float S = 25.f + 75.f * float(h) / 1.f;
-            float V = 25.f + 75.f * float(s) / 3.f;
-            HSVtoRGB(H, S, V, R, G, B);
-            Image::Pixel color(R, G, B, 0xFF);
-
-            // boundaries
-            float tx = shapes[0]->bounds[0];
-            float ty = shapes[0]->bounds[1];
-            float bx = shapes[0]->bounds[2];
-            float by = shapes[0]->bounds[3];
-            for (auto shape : shapes)
-            {
-                tx = std::min(tx, shape->bounds[0]);
-                ty = std::min(ty, shape->bounds[1]);
-                bx = std::max(bx, shape->bounds[2]);
-                by = std::max(by, shape->bounds[3]);
-            }
-            int x0 = int(svgOffX + tx * svgScale);
-            int y0 = int(svgOffY + ty * svgScale);
-            int x1 = int(svgOffX + bx * svgScale);
-            int y1 = int(svgOffY + by * svgScale);
+            const Segment& segment = pair.second;
 
             // temporary segment
             Image imgTmp(imgW, imgH, true);
@@ -146,6 +186,15 @@ bool PrepareForPixelArt(const GNW& gnw)
             imgTmp.Quantize(format);
 
             // colorized segment
+            int R, G, B;
+            segment.GetAsRGB(R, G, B);
+            Image::Pixel color(R, G, B, 0xFF);
+
+            auto x0 = int(svgOffX + segment.bounds.x0 * svgScale);
+            auto y0 = int(svgOffY + segment.bounds.y0 * svgScale);
+            auto x1 = int(svgOffX + segment.bounds.x1 * svgScale);
+            auto y1 = int(svgOffY + segment.bounds.y1 * svgScale);
+
             for (int y = y0; y <= y1; ++y)
             {
                 for (int x = x0; x <= x1; ++x)
@@ -158,18 +207,21 @@ bool PrepareForPixelArt(const GNW& gnw)
             }
 
             // segment on dummy display
-            for (auto shape : shapes)
+            for (NSVGshape* shape = svgImage->shapes; shape != nullptr; shape = shape->next)
             {
-                auto x0 = int(svgOffX + shape->bounds[0] * svgScale) / pxlS;
-                auto y0 = int(svgOffY + shape->bounds[1] * svgScale) / pxlS - gnw.GetConfig().exp;
-                auto x1 = int(svgOffX + shape->bounds[2] * svgScale) / pxlS;
-                auto y1 = int(svgOffY + shape->bounds[3] * svgScale) / pxlS - gnw.GetConfig().exp;
-
-                for (int y = y0; y <= y1; ++y)
+                if (shape->title == title)
                 {
-                    for (int x = x0; x <= x1; ++x)
+                    auto x0 = int(svgOffX + shape->bounds[0] * svgScale) / pxlS;
+                    auto y0 = int(svgOffY + shape->bounds[1] * svgScale) / pxlS - gnw.GetConfig().exp;
+                    auto x1 = int(svgOffX + shape->bounds[2] * svgScale) / pxlS;
+                    auto y1 = int(svgOffY + shape->bounds[3] * svgScale) / pxlS - gnw.GetConfig().exp;
+
+                    for (int y = y0; y <= y1; ++y)
                     {
-                        imgDum.SetPixel(x, y, color);
+                        for (int x = x0; x <= x1; ++x)
+                        {
+                            imgDum.SetPixel(x, y, color);
+                        }
                     }
                 }
             }
