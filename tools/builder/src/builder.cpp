@@ -302,8 +302,14 @@ bool CompileAssets(const GNW& gnw)
 {
     std::cout << "compile assets: " << gnw.GetName() << std::endl;
 
+    using Offset = int;
+    using SpriteId = uint32_t;
+    using SegmentId = std::string;
+    using Sprite = std::shared_ptr<Image>;
+
     Dump dump;
     int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Display segments");
+    int sspritesSection = dump.AddSection(gnw.GetName() + "_ssprites", "Sprites for segments drawing");
     int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics");
     int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
     int controlsSection = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
@@ -312,8 +318,7 @@ bool CompileAssets(const GNW& gnw)
     std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
     std::string logFile = gnw.GetAssetsPath() + "segments.decoded.log";
 
-    // -------------------------------------------------------------------------
-
+    // load display png and check for defects
     Image lcdImg(lcdFile, Image::Format8888);
     if (lcdImg.GetW() != lcdW || lcdImg.GetH() != lcdH)
     {
@@ -324,8 +329,13 @@ bool CompileAssets(const GNW& gnw)
         return false;
     }
     
-    std::string title; Segment segment;
-    std::map<std::string, Segment> segments; 
+    // declare data mappings
+    std::map< SegmentId, Segment  > segmentIdToSegment;
+    std::map< SegmentId, SpriteId > segmentIdToSpriteId;
+    std::map< SpriteId,  Sprite   > spriteIdToSprite;
+    std::map< SpriteId,  Offset   > spriteIdToOffset;
+
+    // collect segments info from display png
     for (int y = 0; y < lcdH; ++y)
     {
         for (int x = 0; x < lcdW; ++x)
@@ -333,25 +343,105 @@ bool CompileAssets(const GNW& gnw)
             Image::Pixel color = lcdImg.GetPixel(x, y);
             if (color.m_a > 0 && (color.m_r > 0 || color.m_g > 0 || color.m_b > 0))
             {
+                Segment segment;
+                SegmentId segmentId;
                 segment.SetByRGB(color.m_r, color.m_g, color.m_b);
-                segment.GetAsSTR(title);
+                segment.GetAsSTR(segmentId);
 
-                if (segments.find(title) == segments.end())
+                if (segmentIdToSegment.find(segmentId) == segmentIdToSegment.end())
                 {
-                    segments[title].SetBySTR(title);
+                    segmentIdToSegment[segmentId].SetBySTR(segmentId);
                 }
-                segments[title].UpdateTL(float(x), float(y));
-                segments[title].UpdateBR(float(x), float(y));
+                segmentIdToSegment[segmentId].UpdateTL(float(x), float(y));
+                segmentIdToSegment[segmentId].UpdateBR(float(x), float(y));
+            }
+        }
+    }
+    WriteSegments(segmentIdToSegment, logFile);
+    std::cout << "\tdecoded " << segmentIdToSegment.size() << " segments" << std::endl;
+
+    // render sprite image and compute sprite id
+    for (auto& pair : segmentIdToSegment)
+    {
+        auto& segmentId = pair.first;
+        auto& segment = pair.second;
+
+        int x0 = int(segment.bounds.x0);
+        int y0 = int(segment.bounds.y0);
+        int x1 = int(segment.bounds.x1);
+        int y1 = int(segment.bounds.y1);
+
+        int sw = x1 - x0 + 1;
+        int sh = y1 - y0 + 1;
+        sh = ((sh + 7) / 8) * 8;
+
+        int R, G, B;
+        segment.GetAsRGB(R, G, B);
+        Image::Pixel color(R, G, B);
+
+        Sprite sprite;
+        sprite.reset(new Image(sw, sh, false));
+        for (int y = y0; y <= y1; ++y)
+        {
+            for (int x = x0; x <= x1; ++x)
+            {
+                Image::Pixel pixel = lcdImg.GetPixel(x, y);
+                if (pixel.hash() == color.hash())
+                {
+                    sprite->SetPixel(x - x0, y - y0, Image::Pixel(0xFF, 0xFF, 0xFF));
+                }
+            }
+        }
+
+        SpriteId spriteId = 0;
+        spriteId = crc32(spriteId, sprite->GetBytes(), sprite->GetBytesCount());
+        segmentIdToSpriteId[segmentId] = spriteId;
+        spriteIdToSprite[spriteId] = sprite;
+    }
+
+    // write sprite size and bitmap to section 
+    for (auto& pair : spriteIdToSprite)
+    {
+        auto& spriteId = pair.first;
+        auto& sprite = pair.second;
+
+        spriteIdToOffset[spriteId] = dump[sspritesSection].GetOffset();
+        dump[sspritesSection].Append(uint8_t(sprite->GetW()));
+        dump[sspritesSection].Append(uint8_t(sprite->GetH()));
+
+        for (size_t p = 0; p < sprite->GetH() / 8; ++p)
+        {
+            for (size_t x = 0; x < sprite->GetW(); ++x)
+            {
+                uint8_t byte = 0;
+                for (int b = 0; b < 8; ++b)
+                {
+                    int y = p * 8 + b;
+                    if (sprite->GetPixel(x, y).hash() == 0xFFFFFF)
+                    {
+                        byte |= 1 << b;
+                    }
+                }
+                dump[sspritesSection].Append(byte);
             }
         }
     }
 
-    WriteSegments(segments, logFile);
-    std::cout << "\tdecoded " << segments.size() << " segments" << std::endl;
+    // write segment coodrs and offset to sprite
+    for (auto& pair : segmentIdToSpriteId)
+    {
+        auto& segment = segmentIdToSegment[pair.first];
+        auto& offset = spriteIdToOffset[pair.second];
+
+        dump[segmentsSection].Append(uint8_t(segment.bounds.x0));
+        dump[segmentsSection].Append(uint8_t(segment.bounds.y0));
+        dump[segmentsSection].Append(uint8_t(offset >> 0));
+        dump[segmentsSection].Append(uint8_t(offset >> 8));
+    }
 
     // -------------------------------------------------------------------------
+
     std::cout << "\tappend firmware data" << std::endl;
-   
     dump[firmwareSection].Append(gnw.GetConfig().rom);
 
     // -------------------------------------------------------------------------

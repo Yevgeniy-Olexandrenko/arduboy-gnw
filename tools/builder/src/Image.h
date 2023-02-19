@@ -72,7 +72,8 @@ public:
 	size_t GetW() const;
 	size_t GetH() const;
 
-	png::byte * GetBytes();
+	png::byte* GetBytes();
+	size_t GetBytesCount() const;
 	size_t GetChannels() const;
 	size_t GetStride() const;
 

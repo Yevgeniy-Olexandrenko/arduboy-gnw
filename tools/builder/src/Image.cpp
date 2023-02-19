@@ -324,6 +324,19 @@ png::byte* Image::GetBytes()
 	return nullptr;
 }
 
+size_t Image::GetBytesCount() const
+{
+	if (m_imageRGB)
+	{
+		return m_imageRGB->get_pixbuf().get_bytes().size();
+	}
+	else if (m_imageRGBA)
+	{
+		return m_imageRGBA->get_pixbuf().get_bytes().size();
+	}
+	return 0;
+}
+
 size_t Image::GetChannels() const
 {
 	return GetStride() / GetW();

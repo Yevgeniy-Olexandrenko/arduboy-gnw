@@ -12,9 +12,12 @@ class Dump
 	public:
 		Section(const std::string& name, const std::string& comment);
 		void AddComment(const std::string& comment);
+
+		int  GetOffset() const;
 		void Append(uint8_t byte);
 		void Append(std::vector<uint8_t> bytes);
 		void Append(const std::string& file);
+
 		void AddSize();
 		void Save(std::ostream& stream);
 

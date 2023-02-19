@@ -14,6 +14,11 @@ void Dump::Section::AddComment(const std::string& comment)
 	m_comments.push_back(comment);
 }
 
+int Dump::Section::GetOffset() const
+{
+	return m_bytes.size();
+}
+
 void Dump::Section::Append(uint8_t byte)
 {
 	m_bytes.push_back(byte);
