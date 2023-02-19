@@ -305,15 +305,16 @@ bool CompileAssets(const GNW& gnw)
     using Offset = int;
     using SpriteId = uint32_t;
     using SegmentId = std::string;
+    using GraphicsId = int;
     using Sprite = std::shared_ptr<Image>;
 
     Dump dump;
-    int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Display segments");
-    int sspritesSection = dump.AddSection(gnw.GetName() + "_ssprites", "Sprites for segments drawing");
-    int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics");
-    int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
     int controlsSection = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
-
+    int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Display segments rendering info");
+    int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics rendering info");
+    int spritesSection  = dump.AddSection(gnw.GetName() + "_sprites",  "Sprites for rendering");
+    int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
+    
     std::string lcdFile = gnw.GetAssetPath("png");
     std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
     std::string logFile = gnw.GetAssetsPath() + "segments.decoded.log";
@@ -330,10 +331,12 @@ bool CompileAssets(const GNW& gnw)
     }
     
     // declare data mappings
-    std::map< SegmentId, Segment  > segmentIdToSegment;
-    std::map< SegmentId, SpriteId > segmentIdToSpriteId;
-    std::map< SpriteId,  Sprite   > spriteIdToSprite;
-    std::map< SpriteId,  Offset   > spriteIdToOffset;
+    std::map< SegmentId,  Segment  > segmentIdToSegment;
+    std::map< SpriteId,   Sprite   > spriteIdToSegmentsSprite;
+    std::map< SpriteId,   Sprite   > spriteIdToGraphicsSprite;
+    std::map< SpriteId,   Offset   > spriteIdToOffset;
+    std::map< SegmentId,  SpriteId > segmentIdToSpriteId;
+    std::map< GraphicsId, SpriteId > graphicsIdToSpriteId;
 
     // collect segments info from display png
     for (int y = 0; y < lcdH; ++y)
@@ -360,7 +363,7 @@ bool CompileAssets(const GNW& gnw)
     WriteSegments(segmentIdToSegment, logFile);
     std::cout << "\tdecoded " << segmentIdToSegment.size() << " segments" << std::endl;
 
-    // render sprite image and compute sprite id
+    // render sprite and compute sprite id for each segment 
     for (auto& pair : segmentIdToSegment)
     {
         auto& segmentId = pair.first;
@@ -395,19 +398,54 @@ bool CompileAssets(const GNW& gnw)
 
         SpriteId spriteId = 0;
         spriteId = crc32(spriteId, sprite->GetBytes(), sprite->GetBytesCount());
+        spriteIdToSegmentsSprite[spriteId] = sprite;
         segmentIdToSpriteId[segmentId] = spriteId;
-        spriteIdToSprite[spriteId] = sprite;
     }
 
-    // write sprite size and bitmap to section 
-    for (auto& pair : spriteIdToSprite)
+    // render sprite and compute sprite id for each graphics block 
+    for (GraphicsId graphicsId = 0; graphicsId < (lcdH * lcdW / (8 * 8)); ++graphicsId)
     {
-        auto& spriteId = pair.first;
-        auto& sprite = pair.second;
+        int x0 = (graphicsId % (lcdW / 8)) * 8;
+        int y0 = (graphicsId / (lcdW / 8)) * 8;
 
-        spriteIdToOffset[spriteId] = dump[sspritesSection].GetOffset();
-        dump[sspritesSection].Append(uint8_t(sprite->GetW()));
-        dump[sspritesSection].Append(uint8_t(sprite->GetH()));
+        Sprite sprite;
+        sprite.reset(new Image(8, 8, false));
+        for (int y = y0; y < y0 + 8; ++y)
+        {
+            for (int x = x0; x < x0 + 8; ++x)
+            {
+                Image::Pixel pixel = lcdImg.GetPixel(x, y);
+                if (pixel.hash() == 0xFF000000)
+                {
+                    sprite->SetPixel(x - x0, y - y0, Image::Pixel(0xFF, 0xFF, 0xFF));
+                }
+            }
+        }
+
+        SpriteId spriteId = 0;
+        spriteId = crc32(spriteId, sprite->GetBytes(), sprite->GetBytesCount());
+
+        if (spriteId == 0x8BFF08F2)
+        {
+            // special case: all 8x8 pixels are clear
+            graphicsIdToSpriteId[graphicsId] = SpriteId(0x00000000);
+            continue;
+        }
+        if (spriteId == 0x0A0B8E4D)
+        {
+            // special case: all 8x8 pixels are set
+            graphicsIdToSpriteId[graphicsId] = SpriteId(0xFFFFFFFF);
+            continue;
+        }
+        spriteIdToGraphicsSprite[spriteId] = sprite;
+        graphicsIdToSpriteId[graphicsId] = spriteId;
+    }
+
+    // write size and bitmap for each sprite
+    auto dumpSprite = [&](const Sprite& sprite)
+    {
+        dump[spritesSection].Append(uint8_t(sprite->GetW()));
+        dump[spritesSection].Append(uint8_t(sprite->GetH()));
 
         for (size_t p = 0; p < sprite->GetH() / 8; ++p)
         {
@@ -422,12 +460,34 @@ bool CompileAssets(const GNW& gnw)
                         byte |= 1 << b;
                     }
                 }
-                dump[sspritesSection].Append(byte);
+                dump[spritesSection].Append(byte);
             }
         }
-    }
+    };
+    for (auto& pair : spriteIdToSegmentsSprite)
+    {
+        auto& spriteId = pair.first;
+        auto& sprite = pair.second;
 
-    // write segment coodrs and offset to sprite
+        spriteIdToOffset[spriteId] = dump[spritesSection].GetOffset();
+        dumpSprite(sprite);
+
+        //char buf[10]; itoa(spriteId, buf, 16);
+        //sprite->Save(gnw.GetAssetsPath() + "segments." + buf + ".png");
+    }
+    for (auto& pair : spriteIdToGraphicsSprite)
+    {
+        auto& spriteId = pair.first;
+        auto& sprite = pair.second;
+
+        spriteIdToOffset[spriteId] = dump[spritesSection].GetOffset();
+        dumpSprite(sprite);
+
+        //char buf[10]; itoa(spriteId, buf, 16);
+        //sprite->Save(gnw.GetAssetsPath() + "graphics." + buf + ".png");
+    }
+    
+    // write position and offset to sprite for each segment
     for (auto& pair : segmentIdToSpriteId)
     {
         auto& segment = segmentIdToSegment[pair.first];
@@ -437,6 +497,30 @@ bool CompileAssets(const GNW& gnw)
         dump[segmentsSection].Append(uint8_t(segment.bounds.y0));
         dump[segmentsSection].Append(uint8_t(offset >> 0));
         dump[segmentsSection].Append(uint8_t(offset >> 8));
+    }
+
+    // write offset to sprite for each graphics block
+    for (auto& pair : graphicsIdToSpriteId)
+    {
+        auto& spriteId = pair.second;
+
+        if (spriteId == SpriteId(0x00000000))
+        {
+            dump[graphicsSection].Append(0x00);
+            dump[graphicsSection].Append(0x00);
+            continue;
+        }
+
+        if (spriteId == SpriteId(0xFFFFFFFF))
+        {
+            dump[graphicsSection].Append(0xFF);
+            dump[graphicsSection].Append(0xFF);
+            continue;
+        }
+
+        Offset offset = spriteIdToOffset[spriteId];
+        dump[graphicsSection].Append(uint8_t(offset >> 0));
+        dump[graphicsSection].Append(uint8_t(offset >> 8));
     }
 
     // -------------------------------------------------------------------------
