@@ -11,6 +11,13 @@
 
 // -----------------------------------------------------------------------------
 
+using SegmentId = int;
+using GraphicsId = int;
+
+using SpriteId = uint32_t;
+using Sprite = std::shared_ptr<Image>;
+using Offset = int;
+
 struct Segment
 {
     int o; // 0 - 8 => 4 bits
@@ -43,6 +50,13 @@ struct Segment
         h = int(0.5f + 1.f * (S - 25.f) / 75.f);
     }
 
+    void SetByINT(int i)
+    {
+        o = (i >> 3 & 0x0F);
+        s = (i >> 1 & 0x03);
+        h = (i >> 0 & 0x01);
+    }
+
     void GetAsSTR(std::string& str) const
     {
         str.resize(5);
@@ -52,6 +66,13 @@ struct Segment
         str[1] = str[3] = '.';
     }
 
+    void GetAsRGB(int& R, int& G, int& B) const
+    {
+        float H, S, V;
+        GetAsHSV(H, S, V);
+        HSVtoRGB(H, S, V, R, G, B);
+    }
+
     void GetAsHSV(float& H, float& S, float& V) const
     {
         H = 360.f * float(o) / 9.f;
@@ -59,11 +80,9 @@ struct Segment
         V = 25.f + 75.f * float(s) / 3.f;
     }
 
-    void GetAsRGB(int& R, int& G, int& B) const
+    void GetAsINT(int& i) const
     {
-        float H, S, V;
-        GetAsHSV(H, S, V);
-        HSVtoRGB(H, S, V, R, G, B);
+        i = (o << 3 | s << 1 | h);
     }
 
     void UpdateTL(float x, float y)
@@ -94,7 +113,7 @@ struct Segment
     }
 };
 
-void WriteSegments(const std::map<std::string, Segment>& segments, const std::string& file)
+void WriteSegments(const std::map<int, Segment>& segments, const std::string& file)
 {
     std::ofstream stream(file);
     for (auto& pair : segments)
@@ -126,23 +145,25 @@ bool PrepareForPixelArt(const GNW& gnw)
 
         // ---------------------------------------------------------------------
        
-        std::map<std::string, Segment> segments;
+        std::map<SegmentId, Segment> segmentIdToSegment;
         for (NSVGshape* shape = svgImage->shapes; shape != nullptr; shape = shape->next)
         {
-            std::string title = shape->title;
+            const std::string title = shape->title;
             if (!title.empty() && title.size() == 5 && title[1] == '.' && title[3] == '.')
             {
-                if (segments.find(title) == segments.end())
-                {
-                    segments[title].SetBySTR(title);
-                }
-                segments[title].UpdateTL(shape->bounds[0], shape->bounds[1]);
-                segments[title].UpdateBR(shape->bounds[2], shape->bounds[3]);
+                Segment segment;
+                SegmentId segmentId;
+                segment.SetBySTR(title);
+                segment.GetAsINT(segmentId);
+
+                segmentIdToSegment[segmentId].SetByINT(segmentId);
+                segmentIdToSegment[segmentId].UpdateTL(shape->bounds[0], shape->bounds[1]);
+                segmentIdToSegment[segmentId].UpdateBR(shape->bounds[2], shape->bounds[3]);
             }
         }
 
-        WriteSegments(segments, logFile);
-        std::cout << "\tencoded " << segments.size() << " segments" << std::endl;
+        WriteSegments(segmentIdToSegment, logFile);
+        std::cout << "\tencoded " << segmentIdToSegment.size() << " segments" << std::endl;
    
         // ---------------------------------------------------------------------
 
@@ -199,10 +220,12 @@ bool PrepareForPixelArt(const GNW& gnw)
         Image imgDum(lcdW, lcdH, true);
         Image::Format format(2, 2, 2, 1, Image::DitheringNone, Image::DitheringNone);
 
-        for (auto& pair : segments)
+        for (auto& pair : segmentIdToSegment)
         {
-            const std::string& title = pair.first;
-            const Segment& segment = pair.second;
+            auto& segment = pair.second;
+
+            std::string title;
+            segment.GetAsSTR(title);
 
             // temporary segment
             Image imgTmp(imgW, imgH, true);
@@ -302,16 +325,10 @@ bool CompileAssets(const GNW& gnw)
 {
     std::cout << "compile assets: " << gnw.GetName() << std::endl;
 
-    using Offset = int;
-    using SpriteId = uint32_t;
-    using SegmentId = std::string;
-    using GraphicsId = int;
-    using Sprite = std::shared_ptr<Image>;
-
     Dump dump;
     int controlsSection = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
-    int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Display segments rendering info");
-    int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Display graphics rendering info");
+    int segmentsSection = dump.AddSection(gnw.GetName() + "_segments", "Segments rendering info");
+    int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Graphics rendering info");
     int spritesSection  = dump.AddSection(gnw.GetName() + "_sprites",  "Sprites for rendering");
     int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
     
@@ -349,12 +366,9 @@ bool CompileAssets(const GNW& gnw)
                 Segment segment;
                 SegmentId segmentId;
                 segment.SetByRGB(color.m_r, color.m_g, color.m_b);
-                segment.GetAsSTR(segmentId);
+                segment.GetAsINT(segmentId);
 
-                if (segmentIdToSegment.find(segmentId) == segmentIdToSegment.end())
-                {
-                    segmentIdToSegment[segmentId].SetBySTR(segmentId);
-                }
+                segmentIdToSegment[segmentId].SetByINT(segmentId);                
                 segmentIdToSegment[segmentId].UpdateTL(float(x), float(y));
                 segmentIdToSegment[segmentId].UpdateBR(float(x), float(y));
             }
@@ -424,20 +438,8 @@ bool CompileAssets(const GNW& gnw)
 
         SpriteId spriteId = 0;
         spriteId = crc32(spriteId, sprite->GetBytes(), sprite->GetBytesCount());
-
-        if (spriteId == 0x8BFF08F2)
-        {
-            // special case: all 8x8 pixels are clear
-            graphicsIdToSpriteId[graphicsId] = SpriteId(0x00000000);
-            continue;
-        }
-        if (spriteId == 0x0A0B8E4D)
-        {
-            // special case: all 8x8 pixels are set
-            graphicsIdToSpriteId[graphicsId] = SpriteId(0xFFFFFFFF);
-            continue;
-        }
-        spriteIdToGraphicsSprite[spriteId] = sprite;
+        if (spriteId != 0x8BFF08F2) // empty block
+            spriteIdToGraphicsSprite[spriteId] = sprite;
         graphicsIdToSpriteId[graphicsId] = spriteId;
     }
 
@@ -488,39 +490,44 @@ bool CompileAssets(const GNW& gnw)
     }
     
     // write position and offset to sprite for each segment
-    for (auto& pair : segmentIdToSpriteId)
+    for (SegmentId segmentId = 0; segmentId <= (8 << 3 | 3 << 1 | 1); ++segmentId)
     {
-        auto& segment = segmentIdToSegment[pair.first];
-        auto& offset = spriteIdToOffset[pair.second];
+        if (segmentIdToSegment.find(segmentId) != segmentIdToSegment.end())
+        {
+            auto& segment  = segmentIdToSegment[segmentId];
+            auto& spriteId = segmentIdToSpriteId[segmentId];
+            auto& offset   = spriteIdToOffset[spriteId];
 
-        dump[segmentsSection].Append(uint8_t(segment.bounds.x0));
-        dump[segmentsSection].Append(uint8_t(segment.bounds.y0));
-        dump[segmentsSection].Append(uint8_t(offset >> 0));
-        dump[segmentsSection].Append(uint8_t(offset >> 8));
+            dump[segmentsSection].Append(uint8_t(segment.bounds.x0));
+            dump[segmentsSection].Append(uint8_t(segment.bounds.y0));
+            dump[segmentsSection].Append(uint8_t(offset >> 0));
+            dump[segmentsSection].Append(uint8_t(offset >> 8));
+        }
+        else
+        {
+            dump[segmentsSection].Append(0xFF);
+            dump[segmentsSection].Append(0xFF);
+            dump[segmentsSection].Append(0xFF);
+            dump[segmentsSection].Append(0xFF);
+        }
     }
 
     // write offset to sprite for each graphics block
-    for (auto& pair : graphicsIdToSpriteId)
+    for (GraphicsId graphicsId = 0; graphicsId < (lcdH * lcdW / (8 * 8)); ++graphicsId)
     {
-        auto& spriteId = pair.second;
-
-        if (spriteId == SpriteId(0x00000000))
+        auto& spriteId = graphicsIdToSpriteId[graphicsId];
+        if (spriteId == SpriteId(0x8BFF08F2))
         {
+            // empty block
             dump[graphicsSection].Append(0x00);
             dump[graphicsSection].Append(0x00);
-            continue;
         }
-
-        if (spriteId == SpriteId(0xFFFFFFFF))
+        else
         {
-            dump[graphicsSection].Append(0xFF);
-            dump[graphicsSection].Append(0xFF);
-            continue;
+            Offset offset = spriteIdToOffset[spriteId];
+            dump[graphicsSection].Append(uint8_t(offset >> 0));
+            dump[graphicsSection].Append(uint8_t(offset >> 8));
         }
-
-        Offset offset = spriteIdToOffset[spriteId];
-        dump[graphicsSection].Append(uint8_t(offset >> 0));
-        dump[graphicsSection].Append(uint8_t(offset >> 8));
     }
 
     // -------------------------------------------------------------------------
