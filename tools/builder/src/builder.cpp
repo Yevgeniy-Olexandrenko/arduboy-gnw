@@ -111,10 +111,10 @@ bool PrepareForPixelArt(const GNW& gnw)
     std::cout << "prepare for pixel art: " << gnw.GetName() << std::endl;
 
     std::string svgFile = gnw.GetAssetPath("svg");
-    std::string pxlFile = gnw.GetAssetPath("pixels.png");
-    std::string refFile = gnw.GetAssetPath("reference.png");
-    std::string dumFile = gnw.GetAssetPath("png");
-    std::string logFile = gnw.GetAssetsPath() + "segments.encoded.txt";
+    std::string lcdFile = gnw.GetAssetPath("png");
+    std::string scrFile = gnw.GetAssetsPath() + "pixelart.lcdscreen.png";
+    std::string refFile = gnw.GetAssetsPath() + "pixelart.reference.png";
+    std::string logFile = gnw.GetAssetsPath() + "segments.encoded.log";
 
     NSVGimage* svgImage = nullptr;
     NSVGrasterizer* svgRasterizer = nullptr;
@@ -188,8 +188,8 @@ bool PrepareForPixelArt(const GNW& gnw)
             }
         }
 
-        std::cout << "\t\tsave to " << pxlFile << std::endl;
-        imgLcd.Save(pxlFile);
+        std::cout << "\t\tsave to " << scrFile << std::endl;
+        imgLcd.Save(scrFile);
         
         // ---------------------------------------------------------------------
         std::cout << "\trender reference layer" << std::endl;
@@ -281,8 +281,8 @@ bool PrepareForPixelArt(const GNW& gnw)
         std::cout << "\t\tsave to " << refFile << std::endl;
         imgSeg.Save(refFile);
 
-        std::cout << "\t\tsave to " << dumFile << std::endl;
-        imgDum.Save(dumFile);
+        std::cout << "\t\tsave to " << lcdFile << std::endl;
+        imgDum.Save(lcdFile);
 
         nsvgDelete(svgImage);
         nsvgDeleteRasterizer(svgRasterizer);
@@ -308,17 +308,17 @@ bool CompileAssets(const GNW& gnw)
     int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
     int controlsSection = dump.AddSection(gnw.GetName() + "_controls", "Controls configuration");
 
-    std::string pngFile = gnw.GetAssetPath("png");
+    std::string lcdFile = gnw.GetAssetPath("png");
     std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
-    std::string logFile = gnw.GetAssetsPath() + "segments.decoded.txt";
+    std::string logFile = gnw.GetAssetsPath() + "segments.decoded.log";
 
     // -------------------------------------------------------------------------
 
-    Image lcdImg(pngFile, Image::Format8888);
+    Image lcdImg(lcdFile, Image::Format8888);
     if (lcdImg.GetW() != lcdW || lcdImg.GetH() != lcdH)
     {
         std::cout << "ERROR: defective display PNG!" << std::endl;
-        std::cout << pngFile << std::endl;
+        std::cout << lcdFile << std::endl;
 
         std::cout << std::endl;
         return false;
