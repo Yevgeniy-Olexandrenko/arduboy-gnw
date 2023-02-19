@@ -10,7 +10,7 @@ const uint8_t gnw_popeye_controls[] PROGMEM =
 const size_t gnw_popeye_controls_size = 0;
 
 // -----------------------------------------------------------------------------
-// Display segments rendering info
+// Segments rendering info
 // size: 288 bytes
 // -----------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ const uint8_t gnw_popeye_segments[] PROGMEM =
 };
 
 // -----------------------------------------------------------------------------
-// Display graphics rendering info
+// Graphics rendering info
 // size: 256 bytes
 // -----------------------------------------------------------------------------
 

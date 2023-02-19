@@ -13,8 +13,8 @@ const uint8_t autoslalom_controls[] PROGMEM =
 const size_t autoslalom_controls_size = 18;
 
 // -----------------------------------------------------------------------------
-// Display segments rendering info
-// size: 280 bytes
+// Segments rendering info
+// size: 288 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t autoslalom_segments[] PROGMEM =
@@ -27,6 +27,7 @@ const uint8_t autoslalom_segments[] PROGMEM =
     0x21, 0x27, 0xC6, 0x00, 0x2C, 0x21, 0x85, 0x00,
     0x5C, 0x27, 0x90, 0x02, 0x60, 0x1F, 0x84, 0x02,
     0x5F, 0x35, 0xB2, 0x02, 0x67, 0x35, 0xB2, 0x02,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0x13, 0x14, 0xD6, 0x00, 0x23, 0x07, 0xB3, 0x00,
     0x18, 0x2D, 0xEE, 0x00, 0x17, 0x33, 0x34, 0x01,
     0x30, 0x2D, 0x0C, 0x01, 0x2F, 0x33, 0xD6, 0x01,
@@ -57,7 +58,7 @@ const uint8_t autoslalom_segments[] PROGMEM =
 };
 
 // -----------------------------------------------------------------------------
-// Display graphics rendering info
+// Graphics rendering info
 // size: 256 bytes
 // -----------------------------------------------------------------------------
 

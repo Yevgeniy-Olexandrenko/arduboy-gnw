@@ -13,7 +13,7 @@ const uint8_t gnw_mmouse_controls[] PROGMEM =
 const size_t gnw_mmouse_controls_size = 20;
 
 // -----------------------------------------------------------------------------
-// Display segments rendering info
+// Segments rendering info
 // size: 288 bytes
 // -----------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ const uint8_t gnw_mmouse_segments[] PROGMEM =
 };
 
 // -----------------------------------------------------------------------------
-// Display graphics rendering info
+// Graphics rendering info
 // size: 256 bytes
 // -----------------------------------------------------------------------------
 
