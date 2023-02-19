@@ -457,7 +457,7 @@ bool CompileAssets(const GNW& gnw)
                 for (int b = 0; b < 8; ++b)
                 {
                     int y = p * 8 + b;
-                    if (sprite->GetPixel(x, y).hash() == 0xFFFFFF)
+                    if (sprite->GetPixel(x, y).hash() == 0xFFFFFFFF)
                     {
                         byte |= 1 << b;
                     }
