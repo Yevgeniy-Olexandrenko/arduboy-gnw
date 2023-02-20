@@ -331,6 +331,11 @@ bool CompileAssets(const GNW& gnw)
     int graphicsSection = dump.AddSection(gnw.GetName() + "_graphics", "Graphics rendering info");
     int spritesSection  = dump.AddSection(gnw.GetName() + "_sprites",  "Sprites for rendering");
     int firmwareSection = dump.AddSection(gnw.GetName() + "_firmware", "Firmware dump");
+    int fwFixedSection  = -1;
+    if (!gnw.GetConfig().rom[1].empty())
+    {
+        fwFixedSection = dump.AddSection(gnw.GetName() + "_fw_fixed", "Firmware dump with fixes");
+    }
     
     std::string lcdFile = gnw.GetAssetPath("png");
     std::string hppFile = gnw.GetCodePath() + gnw.GetName() + ".hpp";
@@ -533,16 +538,20 @@ bool CompileAssets(const GNW& gnw)
     // -------------------------------------------------------------------------
 
     std::cout << "\tappend firmware data" << std::endl;
-    dump[firmwareSection].Append(gnw.GetConfig().rom);
+    dump[firmwareSection].Append(gnw.GetAssetsPath() + gnw.GetConfig().rom[0]);
+    if (fwFixedSection >= 0)
+    {
+        dump[fwFixedSection].Append(gnw.GetAssetsPath() + gnw.GetConfig().rom[1]);
+    }
 
     // -------------------------------------------------------------------------
     std::cout << "\tappend controls data" << std::endl;
 
     static const std::vector<std::string> c_names
     {
-        "acl", "time", "game_b", "game_a", "alarm",
-        "right_down", "right_up", "left_down", "left_up", "right", "left",
-        "cheat"
+        "time", "game_b", "game_a", "alarm",
+        "right_down", "right_up", "left_down", "left_up",
+        "right", "left", "cheat_a", "cheat_b", "acl"
     };
     static const std::vector<std::string> c_signals
     {
@@ -550,7 +559,8 @@ bool CompileAssets(const GNW& gnw)
     };
     static const std::vector<std::string> c_inputs
     {
-        "mcu_acl", "mcu_k1", "mcu_k2", "mcu_k3", "mcu_k4", "mcu_alpha", "mcu_beta"
+        "mcu_k1", "mcu_k2", "mcu_k3", "mcu_k4",
+        "mcu_alpha", "mcu_beta", "mcu_acl"
     };
     auto index = [](const std::vector<std::string>& strings, const std::string string) -> int
     {

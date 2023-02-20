@@ -50,10 +50,16 @@ void GNW::ParseConfig(const std::string& ini)
 {
 	std::ifstream stream(ini);
 
-	std::string line;
+	std::string line; size_t pos;
 	while (std::getline(stream, line))
 	{
-		size_t pos = line.find('=');
+		pos = line.find('#');
+		if (pos != std::string::npos)
+		{
+			line.erase(pos);
+		}
+
+		pos = line.find('=');
 		if (pos != std::string::npos)
 		{
 			std::string key = line.substr(0, pos);
@@ -61,16 +67,18 @@ void GNW::ParseConfig(const std::string& ini)
 			trim(key);
 			trim(val);
 
-			if (key == "exp")
+			if (key == "exp") m_config.exp = std::atoi(val.c_str());
+			if (key == "rom") m_config.rom[0] = val;
+			if (key == "rom_fixed") m_config.rom[1] = val;
+			if (key == "cheat_a" || key == "cheat_b")
 			{
-				m_config.exp = std::atoi(val.c_str());
+				if (val.front() == '"' || val.back() == '"')
+				{
+					val = val.substr(1, val.size() - 2);
+				}
+				m_config.cheats[key.back() - 'a'] = val;
 			}
-
-			if (key == "rom")
-			{
-				m_config.rom = m_assets + val;
-			}
-
+			
 			pos = key.find("key_");
 			if (pos != std::string::npos)
 			{
@@ -84,6 +92,8 @@ void GNW::ParseConfig(const std::string& ini)
 					m_config.keys.push_back({ trim(name), trim(signal), trim(input) });
 				}
 			}
+
+			if (key == "clone") m_config.clones.push_back(val);
 		}
 	}
 }
