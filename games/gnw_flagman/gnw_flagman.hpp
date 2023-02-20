@@ -1,13 +1,16 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
-// keys:
-// size: 0 bytes
+// keys: left_up right_up left_down right_down time game_b game_a cheat_a acl
+// size: 18 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_flagman_controls[] PROGMEM =
 {
+    0x07, 0x30, 0x05, 0x31, 0x06, 0x32, 0x04, 0x33,
+    0x00, 0x40, 0x01, 0x41, 0x02, 0x42, 0x0A, 0x04,
+    0x0C, 0x16
 };
-const size_t gnw_flagman_controls_size = 0;
+const size_t gnw_flagman_controls_size = 18;
 
 // -----------------------------------------------------------------------------
 // Segments rendering info

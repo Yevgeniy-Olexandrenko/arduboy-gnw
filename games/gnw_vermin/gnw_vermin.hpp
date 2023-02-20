@@ -1,13 +1,15 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
-// keys:
-// size: 0 bytes
+// keys: time game_b game_a cheat_a right left acl
+// size: 14 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_vermin_controls[] PROGMEM =
 {
+    0x00, 0x20, 0x01, 0x21, 0x02, 0x22, 0x0A, 0x23,
+    0x08, 0x05, 0x09, 0x04, 0x0C, 0x16
 };
-const size_t gnw_vermin_controls_size = 0;
+const size_t gnw_vermin_controls_size = 14;
 
 // -----------------------------------------------------------------------------
 // Segments rendering info

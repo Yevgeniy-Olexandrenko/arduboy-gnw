@@ -1,13 +1,13 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
-// keys: acl time game_b game_a alarm right left cheat
+// keys: cheat_a time game_b game_a alarm right left acl
 // size: 16 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_octopus_controls[] PROGMEM =
 {
-    0x00, 0x10, 0x01, 0x41, 0x02, 0x42, 0x03, 0x43,
-    0x04, 0x44, 0x09, 0x06, 0x0A, 0x05, 0x0B, 0x21
+    0x0A, 0x20, 0x00, 0x40, 0x01, 0x41, 0x02, 0x42,
+    0x03, 0x43, 0x08, 0x05, 0x09, 0x04, 0x0C, 0x16
 };
 const size_t gnw_octopus_controls_size = 16;
 
