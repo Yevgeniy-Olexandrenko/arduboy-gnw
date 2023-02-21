@@ -95,9 +95,9 @@ void Prepare::RenderLCDScreen()
 
     Image image(m_imgW, m_imgH, true);
     Image::Pixel oColor(0xFF, 0x00, 0x00, 0x7F);
-    Image::Pixel cColor(0x00, 0xFF, 0xFF, 0x7F);
+    Image::Pixel cColor(0x00, 0x7F, 0x7F, 0x7F);
     Image::Pixel pColor(0x7F, 0x7F, 0x7F, 0x7F);
-    Image::Pixel bColor(0xFF, 0xFF, 0x00, 0x7F);
+    Image::Pixel bColor(0x7F, 0x7F, 0x00, 0x7F);
 
     size_t tEdge = (((m_imgH / pxlS) - lcdH) / 2) * pxlS;
     size_t bEdge = tEdge + lcdH * pxlS;
