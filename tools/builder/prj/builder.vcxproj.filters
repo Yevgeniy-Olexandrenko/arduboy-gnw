@@ -147,6 +147,15 @@
     <ClCompile Include="..\src\HsvRgb.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\builder_compile.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\builder_prepare.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Segment.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\lib\lpng\png.h">
@@ -302,13 +311,22 @@
     <ClInclude Include="..\src\GNW.h">
       <Filter>Sources</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\builder.h">
-      <Filter>Sources</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Dump.h">
       <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="..\src\HsvRgb.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\builder_compile.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\builder_prepare.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Segment.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\builder_config.h">
       <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>
