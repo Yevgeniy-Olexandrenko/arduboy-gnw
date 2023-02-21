@@ -67,7 +67,7 @@ bool Compile::CompileAssets()
         m_graphics = m_dump.AddSection(m_gnw.GetName() + "_graphics", "Graphics rendering info");
         m_sprites  = m_dump.AddSection(m_gnw.GetName() + "_sprites",  "Sprites for rendering");
         m_firmware = m_dump.AddSection(m_gnw.GetName() + "_firmware", "Firmware dump");
-        if (!m_gnw.GetConfig().rom[1].empty())
+        if (!m_gnw.GetConfig().firmware[1].empty())
         {
             m_fw_fixed = m_dump.AddSection(m_gnw.GetName() + "_fw_fixed", "Firmware dump with fixes");
         }
@@ -324,10 +324,10 @@ void Compile::DumpFirmwareSection()
 {
     std::cout << "\twrite firmware data" << std::endl;
 
-    m_dump[m_firmware].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().rom[0]);
+    m_dump[m_firmware].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[0]);
     if (m_fw_fixed != -1)
     {
-        m_dump[m_fw_fixed].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().rom[1]);
+        m_dump[m_fw_fixed].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[1]);
     }
 }
 

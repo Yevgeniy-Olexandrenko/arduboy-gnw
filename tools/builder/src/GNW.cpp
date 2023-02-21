@@ -68,8 +68,8 @@ void GNW::ParseConfig(const std::string& ini)
 			trim(val);
 
 			if (key == "exp") m_config.exp = std::atoi(val.c_str());
-			if (key == "rom") m_config.rom[0] = val;
-			if (key == "rom_fixed") m_config.rom[1] = val;
+			if (key == "firmware") m_config.firmware[0] = val;
+			if (key == "fw_fixed") m_config.firmware[1] = val;
 			if (key == "cheat_a" || key == "cheat_b")
 			{
 				if (val.front() == '"' || val.back() == '"')

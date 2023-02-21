@@ -16,7 +16,7 @@ public:
 		};
 
 		int exp = 0;
-		std::string rom[2];
+		std::string firmware[2];
 		std::string cheats[2];
 		std::vector<Key> keys;
 		std::vector<std::string> clones;
