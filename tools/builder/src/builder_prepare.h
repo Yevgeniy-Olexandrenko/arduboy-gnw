@@ -19,9 +19,9 @@ public:
 private:
 	bool OpenSVG();
 	void CollectSegmentsInfo();
-	void RenderLCDScreen();
-	void RenderReference();
-	void RenderDummyLCD();
+	void RenderLayerDisplay();
+	void RenderLayerRefSegments();
+	void RenderDummyDisplay();
 
 private:
 	const GNW& m_gnw;

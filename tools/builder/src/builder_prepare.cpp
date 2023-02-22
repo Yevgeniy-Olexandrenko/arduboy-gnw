@@ -30,9 +30,14 @@ bool Prepare::PrepareForPixelArt()
     if (OpenSVG())
     {
         CollectSegmentsInfo();
-        RenderLCDScreen();
-        RenderReference();
-        RenderDummyLCD();
+        std::cout << "\tencoded " << m_segmentIdToSegment.size() << " segments" << std::endl;
+
+        std::cout << "\trender assets for pixelart" << std::endl;
+        RenderLayerDisplay();
+        RenderLayerRefSegments();
+
+        std::cout << "\trender dummy display" << std::endl;
+        RenderDummyDisplay();
 
         std::cout << std::endl;
         return true;
@@ -83,16 +88,15 @@ void Prepare::CollectSegmentsInfo()
         }
     }
 
-    std::cout << "\tencoded " << m_segmentIdToSegment.size() << " segments" << std::endl;
+#if SAVE_LIST_OF_SEGMENTS
     std::ofstream stream(m_gnw.GetAssetsPath() + "segments.encoded.log");
     for (auto& pair : m_segmentIdToSegment) pair.second.Write(stream);
     stream.close();
+#endif
 }
 
-void Prepare::RenderLCDScreen()
+void Prepare::RenderLayerDisplay()
 {
-    std::cout << "\trender pixels layer" << std::endl;
-
     Image image(m_imgW, m_imgH, true);
     Image::Pixel oColor(0xFF, 0x00, 0x00, 0x7F);
     Image::Pixel cColor(0x00, 0x7F, 0x7F, 0x7F);
@@ -139,15 +143,13 @@ void Prepare::RenderLCDScreen()
         }
     }
 
-    std::string file = m_gnw.GetAssetsPath() + "pixelart.lcdscreen.png";
+    std::string file = m_gnw.GetAssetsPath() + "layer.display.png";
     std::cout << "\t\tsave to " << file << std::endl;
     image.Save(file);
 }
 
-void Prepare::RenderReference()
+void Prepare::RenderLayerRefSegments()
 {
-    std::cout << "\trender reference layer" << std::endl;
-
     Image image(m_imgW, m_imgH, true);
     Image::Format format(2, 2, 2, 1, Image::DitheringNone, Image::DitheringNone);
 
@@ -201,69 +203,78 @@ void Prepare::RenderReference()
     }
     nsvgDeleteRasterizer(svgRasterizer);
 
-    std::string file = m_gnw.GetAssetsPath() + "pixelart.reference.png";
+    std::string file = m_gnw.GetAssetsPath() + "layer.ref_segments.png";
     std::cout << "\t\tsave to " << file << std::endl;
     image.Save(file);
 
 }
 
-void Prepare::RenderDummyLCD()
+void Prepare::RenderDummyDisplay()
 {
-    std::cout << "\trender dummy display" << std::endl;
-
-    Image image(lcdW, lcdH, true);
-    for (auto& pair : m_segmentIdToSegment)
+    uint32_t hash = 0;
     {
-        auto& segment = pair.second;
-
-        std::string title;
-        segment.GetAsSTR(title);
-
-        int R, G, B;
-        segment.GetAsRGB(R, G, B);
-        Image::Pixel color(R, G, B, 0xFF);
-
-        // segment on dummy display
-        for (NSVGshape* shape = m_svg->shapes; shape != nullptr; shape = shape->next)
+        Image image(lcdW, lcdH, true);
+        for (auto& pair : m_segmentIdToSegment)
         {
-            if (shape->title == title)
-            {
-                auto x0 = int(m_svgXOffset + shape->bounds[0] * m_svgScale) / pxlS;
-                auto y0 = int(m_svgYOffset + shape->bounds[1] * m_svgScale) / pxlS - m_gnw.GetConfig().exp;
-                auto x1 = int(m_svgXOffset + shape->bounds[2] * m_svgScale) / pxlS;
-                auto y1 = int(m_svgYOffset + shape->bounds[3] * m_svgScale) / pxlS - m_gnw.GetConfig().exp;
+            auto& segment = pair.second;
 
-                for (int y = y0; y <= y1; ++y)
+            std::string title;
+            segment.GetAsSTR(title);
+
+            int R, G, B;
+            segment.GetAsRGB(R, G, B);
+            Image::Pixel color(R, G, B, 0xFF);
+
+            for (NSVGshape* shape = m_svg->shapes; shape != nullptr; shape = shape->next)
+            {
+                if (shape->title == title)
                 {
-                    for (int x = x0; x <= x1; ++x)
+                    auto x0 = int(m_svgXOffset + shape->bounds[0] * m_svgScale) / pxlS;
+                    auto y0 = int(m_svgYOffset + shape->bounds[1] * m_svgScale) / pxlS - m_gnw.GetConfig().exp;
+                    auto x1 = int(m_svgXOffset + shape->bounds[2] * m_svgScale) / pxlS;
+                    auto y1 = int(m_svgYOffset + shape->bounds[3] * m_svgScale) / pxlS - m_gnw.GetConfig().exp;
+
+                    for (int y = y0; y <= y1; ++y)
                     {
-                        image.SetPixel(x, y, color);
+                        for (int x = x0; x <= x1; ++x)
+                        {
+                            image.SetPixel(x, y, color);
+                        }
                     }
                 }
             }
         }
+
+        std::string file = m_gnw.GetAssetPath("segments.png");
+        std::cout << "\t\tsave to " << file << std::endl;
+        image.Save(file);
+
+        hash = crc32(hash, image.GetBytes(), image.GetBytesCount());
     }
 
-    // graphics on dummy display
-    srand(0);
-    Image::Pixel black(0, 0, 0, 0xFF);
-    for (int i = 0; i < 30; ++i)
+    srand(hash);
     {
-        int x = rand() % lcdW;
-        int y = rand() % lcdH;
-        int x0 = std::max(x - 3, 0);
-        int y0 = std::max(y - 3, 0);
-        int x1 = std::min(x + 3, lcdW - 1);
-        int y1 = std::min(y + 3, lcdH - 1);
-        for (int yy = y0; yy <= y1; ++yy)
-            if (image.GetPixel(x, yy).m_a == 0)
-                image.SetPixel(x, yy, black);
-        for (int xx = x0; xx <= x1; ++xx)
-            if (image.GetPixel(xx, y).m_a == 0)
-                image.SetPixel(xx, y, black);
-    }
+        Image image(lcdW, lcdH, true);
+        Image::Pixel black(0, 0, 0, 0xFF);
 
-    std::string file = m_gnw.GetAssetPath("png");
-    std::cout << "\t\tsave to " << file << std::endl;
-    image.Save(file);
+        for (int i = 0; i < 30; ++i)
+        {
+            int x = rand() % lcdW;
+            int y = rand() % lcdH;
+            int x0 = std::max(x - 3, 0);
+            int y0 = std::max(y - 3, 0);
+            int x1 = std::min(x + 3, lcdW - 1);
+            int y1 = std::min(y + 3, lcdH - 1);
+            for (int yy = y0; yy <= y1; ++yy)
+                if (image.GetPixel(x, yy).m_a == 0)
+                    image.SetPixel(x, yy, black);
+            for (int xx = x0; xx <= x1; ++xx)
+                if (image.GetPixel(xx, y).m_a == 0)
+                    image.SetPixel(xx, y, black);
+        }
+
+        std::string file = m_gnw.GetAssetPath("graphics.png");
+        std::cout << "\t\tsave to " << file << std::endl;
+        image.Save(file);
+    }
 }

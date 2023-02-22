@@ -44,7 +44,9 @@ private:
 
 private:
 	const GNW& m_gnw;
-	Image* m_lcd;
+
+	Image* m_displaySegments;
+	Image* m_displayGraphics;
 
 	Dump m_dump;
 	int  m_controls;

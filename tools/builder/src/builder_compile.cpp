@@ -6,8 +6,6 @@
 #include "builder_config.h"
 #include "Image.h"
 
-#define SAVE_SPRITES_TO_FILES 0
-
 namespace
 {
     static const std::vector<std::string> c_names
@@ -40,7 +38,8 @@ namespace
 
 Compile::Compile(const GNW& gnw)
 	: m_gnw(gnw)
-    , m_lcd(nullptr)
+    , m_displaySegments(nullptr)
+    , m_displayGraphics(nullptr)
     , m_controls(-1)
     , m_segments(-1)
     , m_graphics(-1)
@@ -52,7 +51,8 @@ Compile::Compile(const GNW& gnw)
 
 Compile::~Compile()
 {
-    delete m_lcd;
+    delete m_displaySegments;
+    delete m_displayGraphics;
 }
 
 bool Compile::CompileAssets()
@@ -74,12 +74,27 @@ bool Compile::CompileAssets()
 
         // do all work
         CollectSegmentsInfo();
+        std::cout << "\tdecoded " << m_segmentIdToSegment.size() << " segments" << std::endl;
+
+        std::cout << "\trender segments sprites" << std::endl;
         RenderSegmentsSprites();
+
+        std::cout << "\trender graphics sprites" << std::endl;
         RenderGraphicsSprites();
+
+        std::cout << "\twrite sprites data" << std::endl;
         DumpSpritesSection();
+
+        std::cout << "\twrite segments data" << std::endl;
         DumpSegmentsSection();
+
+        std::cout << "\twrite graphics data" << std::endl;
         DumpGraphicsSection();
+
+        std::cout << "\twrite firmware data" << std::endl;
         DumpFirmwareSection();
+
+        std::cout << "\twrite controls data" << std::endl;
         DumpControlsSection();
 
         // save dump
@@ -97,17 +112,26 @@ bool Compile::CompileAssets()
 
 bool Compile::OpenLCD()
 {
-    std::string lcdFile = m_gnw.GetAssetPath("png");
-    m_lcd = new Image(lcdFile, Image::Format8888);
+    std::string displaySegmentsFile = m_gnw.GetAssetPath("segments.png");
+    std::string displayGraphicsFile = m_gnw.GetAssetPath("graphics.png");
 
-    if (m_lcd && m_lcd->GetW() == lcdW && m_lcd->GetH() == lcdH)
+    m_displaySegments = new Image(displaySegmentsFile, Image::Format8888);
+    if (m_displaySegments && (m_displaySegments->GetW() != lcdW || m_displaySegments->GetH() != lcdH))
     {
-        return true;
+        std::cout << "ERROR: defective PNG!" << std::endl;
+        std::cout << displaySegmentsFile << std::endl;
+        return false;
     }
 
-    std::cout << "ERROR: defective display PNG!" << std::endl;
-    std::cout << lcdFile << std::endl;
-    return false;
+    m_displayGraphics = new Image(displayGraphicsFile, Image::Format8888);
+    if (m_displayGraphics && (m_displayGraphics->GetW() != lcdW || m_displayGraphics->GetH() != lcdH))
+    {
+        std::cout << "ERROR: defective PNG!" << std::endl;
+        std::cout << displayGraphicsFile << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 void Compile::CollectSegmentsInfo()
@@ -116,7 +140,7 @@ void Compile::CollectSegmentsInfo()
     {
         for (int x = 0; x < lcdW; ++x)
         {
-            Image::Pixel color = m_lcd->GetPixel(x, y);
+            Image::Pixel color = m_displaySegments->GetPixel(x, y);
             if (color.m_a > 0 && (color.m_r > 0 || color.m_g > 0 || color.m_b > 0))
             {
                 Segment segment;
@@ -131,16 +155,15 @@ void Compile::CollectSegmentsInfo()
         }
     }
 
-    std::cout << "\tdecoded " << m_segmentIdToSegment.size() << " segments" << std::endl;
+#if SAVE_LIST_OF_SEGMENTS
     std::ofstream stream(m_gnw.GetAssetsPath() + "segments.decoded.log");
     for (auto& pair : m_segmentIdToSegment) pair.second.Write(stream);
     stream.close();
+#endif
 }
 
 void Compile::RenderSegmentsSprites()
 {
-    std::cout << "\trender segments sprites" << std::endl;
-
     for (auto& pair : m_segmentIdToSegment)
     {
         auto& segmentId = pair.first;
@@ -166,7 +189,7 @@ void Compile::RenderSegmentsSprites()
         {
             for (int x = x0; x <= x1; ++x)
             {
-                Image::Pixel pixel = m_lcd->GetPixel(x, y);
+                Image::Pixel pixel = m_displaySegments->GetPixel(x, y);
                 if (pixel.hash() == color.hash())
                 {
                     sprite->SetPixel(x - x0, y - y0, Image::Pixel(0xFF, 0xFF, 0xFF));
@@ -183,8 +206,6 @@ void Compile::RenderSegmentsSprites()
 
 void Compile::RenderGraphicsSprites()
 {
-    std::cout << "\trender graphics sprites" << std::endl;
-
     for (GraphicsId graphicsId = 0; graphicsId < (lcdH * lcdW / (8 * 8)); ++graphicsId)
     {
         int x0 = (graphicsId % (lcdW / 8)) * 8;
@@ -192,14 +213,16 @@ void Compile::RenderGraphicsSprites()
 
         Sprite sprite;
         sprite.reset(new Image(8, 8, false));
+        Image::Pixel color(0xFF, 0xFF, 0xFF);
+
         for (int y = y0; y < y0 + 8; ++y)
         {
             for (int x = x0; x < x0 + 8; ++x)
             {
-                Image::Pixel pixel = m_lcd->GetPixel(x, y);
-                if (pixel.hash() == 0xFF000000)
+                Image::Pixel pixel = m_displayGraphics->GetPixel(x, y);
+                if (pixel.m_a != 0)
                 {
-                    sprite->SetPixel(x - x0, y - y0, Image::Pixel(0xFF, 0xFF, 0xFF));
+                    sprite->SetPixel(x - x0, y - y0, color);
                 }
             }
         }
@@ -240,8 +263,6 @@ void Compile::DumpSprite(const Sprite& sprite)
 
 void Compile::DumpSpritesSection()
 {
-    std::cout << "\twrite sprites data" << std::endl;
-
     for (auto& pair : m_spriteIdToSegmentsSprite)
     {
         auto& spriteId = pair.first;
@@ -273,8 +294,6 @@ void Compile::DumpSpritesSection()
 
 void Compile::DumpSegmentsSection()
 {
-    std::cout << "\twrite segments data" << std::endl;
-
     for (SegmentId segmentId = 0; segmentId <= (8 << 3 | 3 << 1 | 1); ++segmentId)
     {
         if (m_segmentIdToSegment.find(segmentId) != m_segmentIdToSegment.end())
@@ -300,8 +319,6 @@ void Compile::DumpSegmentsSection()
 
 void Compile::DumpGraphicsSection()
 {
-    std::cout << "\twrite graphics data" << std::endl;
-
     for (GraphicsId graphicsId = 0; graphicsId < (lcdH * lcdW / (8 * 8)); ++graphicsId)
     {
         auto& spriteId = m_graphicsIdToSpriteId[graphicsId];
@@ -322,8 +339,6 @@ void Compile::DumpGraphicsSection()
 
 void Compile::DumpFirmwareSection()
 {
-    std::cout << "\twrite firmware data" << std::endl;
-
     m_dump[m_firmware].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[0]);
     if (m_fw_fixed != -1)
     {
@@ -333,8 +348,6 @@ void Compile::DumpFirmwareSection()
 
 void Compile::DumpControlsSection()
 {
-    std::cout << "\twrite controls data" << std::endl;
-
     std::string keys = "keys:";
     for (auto& key : m_gnw.GetConfig().keys)
     {
