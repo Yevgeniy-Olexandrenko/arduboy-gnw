@@ -19,6 +19,10 @@ public:
     void drawLCD();
 
 private:
+    void drawGraphics();
+    void drawSegments();
+
+private:
     // arduboy related stuff
     Arduboy2Base& m_arduboy;
     GNWData m_segments;
