@@ -5,6 +5,7 @@ GNWEngine::GNWEngine(Arduboy2Base& arduboy)
     , m_segments(nullptr)
     , m_graphics(nullptr)
     , m_sprites(nullptr)
+    , m_gnw(this)
 {
 }
 
@@ -21,6 +22,8 @@ void GNWEngine::powerOn(GNWData controls, GNWData segments, GNWData graphics, GN
     m_graphics = graphics;
     m_sprites  = sprites;
 
+    m_gnw.PowerOn(controls, firmware);
+
     // TODO: init with controls config
     // TODO: init mcu with firmware
     // TODO: do system power on
@@ -36,6 +39,13 @@ void GNWEngine::drawLCD()
     drawGraphics();
     drawSegments();
 }
+
+void GNWEngine::SetBuzzerLevel(bool level)
+{
+    // TODO
+}
+
+// -----------------------------------------------------------------------------
 
 void GNWEngine::drawGraphics()
 {
@@ -64,3 +74,5 @@ void GNWEngine::drawSegments()
         }
     }
 }
+
+// -----------------------------------------------------------------------------

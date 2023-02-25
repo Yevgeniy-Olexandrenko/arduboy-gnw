@@ -8,7 +8,7 @@
 
 using GNWData = const uint8_t*;
 
-class GNWEngine
+class GNWEngine : public GameAndWatch::Handler
 {
 public:
     GNWEngine(Arduboy2Base& arduboy);
@@ -17,6 +17,9 @@ public:
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
     void powerOff();
     void drawLCD();
+
+public: // GameAndWatch::Handler
+    void SetBuzzerLevel(bool level) override;
 
 private:
     void drawGraphics();
