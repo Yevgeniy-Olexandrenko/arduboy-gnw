@@ -24,8 +24,8 @@ void Segment::SetByRGB(int R, int G, int B)
 void Segment::SetByINT(int i)
 {
     o = (i >> 3 & 0x0F);
-    s = (i >> 1 & 0x03);
-    h = (i >> 0 & 0x01);
+    s = (i >> 0 & 0x03);
+    h = (i >> 2 & 0x01);
 }
 
 void Segment::GetAsSTR(std::string& str) const
@@ -53,7 +53,7 @@ void Segment::GetAsHSV(float& H, float& S, float& V) const
 
 void Segment::GetAsINT(int& i) const
 {
-    i = (o << 3 | s << 1 | h);
+    i = (o << 3 | s | h << 2);
 }
 
 void Segment::UpdateTL(float x, float y)
