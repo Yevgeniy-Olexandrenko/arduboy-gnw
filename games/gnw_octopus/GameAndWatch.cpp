@@ -1,10 +1,14 @@
 #include "GameAndWatch.h"
 #include <avr/pgmspace.h>
+#include <string.h>
 
 GameAndWatch::GameAndWatch(Handler* handler)
     : m_handler(handler)
     , m_mcu(this)
-{}
+{
+    memset(m_lcd.segForRender, 0, sizeof(m_lcd.segForRender));
+    memset(m_lcd.segForStore, 0, sizeof(m_lcd.segForStore));
+}
 
 void GameAndWatch::PowerOn(const uint8_t* controls, const uint8_t* firmware)
 {
@@ -38,6 +42,27 @@ void GameAndWatch::SetControl(Control control, bool active)
 void GameAndWatch::Clock()
 {
     m_mcu.Clock();
+}
+
+bool GameAndWatch::HasNewFrame()
+{
+    bool value = m_lcd.newFrame;
+    m_lcd.newFrame = false;
+    return value;
+}
+
+bool GameAndWatch::IsSegmentVisible(int h, int o, int s) const
+{
+    int sbit = ((h << 2) | s);
+    return bool((m_lcd.segForRender[o] >> sbit) & 0x01);
+}
+
+bool GameAndWatch::IsSegmentVisible(int i) const
+{
+    int o = (i >> 3 & 0x0F);
+    int s = (i >> 0 & 0x03);
+    int h = (i >> 2 & 0x01);
+    return IsSegmentVisible(h, o, s);
 }
 
 // -----------------------------------------------------------------------------
@@ -114,9 +139,24 @@ void GameAndWatch::WrPortR(uint8_t data)
     m_handler->SetBuzzerLevel(data & 0x01);
 }
 
-void GameAndWatch::UpdateLCD(int o, uint8_t s)
+void GameAndWatch::WrLCD(int o, uint8_t segments)
 {
-    // TODO
+    if (o == 0)
+    {
+        m_lcd.changes = 0;
+    }
+
+    m_lcd.changes |= (m_lcd.segForStore[o] ^ segments);
+    m_lcd.segForStore[o] = segments;
+
+    if (o == SharpSM5A::k_mcuLcdOCount - 1)
+    {
+        if (m_lcd.changes == 0)
+        {
+            memcpy(m_lcd.segForRender, m_lcd.segForStore, sizeof(m_lcd.segForRender));
+            m_lcd.newFrame = true;
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------

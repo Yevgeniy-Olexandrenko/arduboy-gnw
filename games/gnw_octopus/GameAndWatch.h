@@ -21,6 +21,14 @@ class GameAndWatch : public SharpSM5A::IO
         Input  input;
     };
 
+    struct LCD
+    {
+        uint8_t changes;
+        uint8_t segForStore[SharpSM5A::k_mcuLcdOCount];
+        uint8_t segForRender[SharpSM5A::k_mcuLcdOCount];
+        bool newFrame;
+    };
+
 public:
     class Handler
     {
@@ -42,19 +50,23 @@ public:
     void PowerOn(const uint8_t* controls, const uint8_t* firmware);
     void SetControl(Control control, bool active);
     void Clock();
+    bool HasNewFrame();
+    bool IsSegmentVisible(int h, int o, int s) const;
+    bool IsSegmentVisible(int i) const;
 
 public: // SharpSM5A::IO
-    bool    RdAcl() const override;
+    bool    RdAcl()   const override;
     bool    RdAlpha() const override;
-    bool    RdBeta() const override;
+    bool    RdBeta()  const override;
     uint8_t RdPortK() const override;
     void    WrPortR(uint8_t data) override;
-    void    UpdateLCD(int o, uint8_t s) override;
+    void    WrLCD(int o, uint8_t segments) override;
 
 private:
     Handler*  m_handler;
     SharpSM5A m_mcu;
     uint8_t   m_mcuPortR;
 
+    LCD  m_lcd;
     Line m_lines[Control::count];
 };

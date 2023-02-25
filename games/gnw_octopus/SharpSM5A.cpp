@@ -239,7 +239,7 @@ void SharpSM5A::IncrementDivider()
         {
             uint8_t h0segments = (m_bp ? m_o[o] : 0);
             uint8_t h1segments = (m_bp ? m_ox[o] : 0);
-            m_io->UpdateLCD(o, h1segments << 4 | h0segments);
+            m_io->WrLCD(o, h1segments << 4 | h0segments);
         }
     }
 }

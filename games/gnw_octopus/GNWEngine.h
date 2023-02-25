@@ -15,15 +15,16 @@ public:
 
     void begin();
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
-    void powerOff();
+    void setInput(GameAndWatch::Control control, bool active);
+    bool nextFrame();
     void drawLCD();
 
 public: // GameAndWatch::Handler
     void SetBuzzerLevel(bool level) override;
 
 private:
-    void drawGraphics();
-    void drawSegments();
+    void DrawGraphics();
+    void DrawSegments();
 
 private:
     // arduboy related stuff
