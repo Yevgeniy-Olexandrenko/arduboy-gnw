@@ -1,15 +1,14 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
 // keys: cheat_a time game_b game_a alarm right left acl
-// size: 16 bytes
+// size: 13 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_fire_controls[] PROGMEM =
 {
-    0x0A, 0x20, 0x00, 0x40, 0x01, 0x41, 0x02, 0x42,
-    0x03, 0x43, 0x08, 0x05, 0x09, 0x04, 0x0C, 0x16
+    0x41, 0x42, 0x43, 0x44, 0xFF, 0xFF, 0xFF, 0xFF,
+    0x06, 0x05, 0x21, 0xFF, 0x10
 };
-const size_t gnw_fire_controls_size = 16;
 
 // -----------------------------------------------------------------------------
 // Segments rendering info

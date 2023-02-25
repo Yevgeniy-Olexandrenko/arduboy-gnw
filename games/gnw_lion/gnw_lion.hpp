@@ -1,16 +1,14 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
 // keys: cheat_b right_down right_up left_down left_up time game_b game_a alarm cheat_a acl
-// size: 22 bytes
+// size: 13 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_lion_controls[] PROGMEM =
 {
-    0x0B, 0x20, 0x04, 0x30, 0x05, 0x31, 0x06, 0x32,
-    0x07, 0x33, 0x00, 0x40, 0x01, 0x41, 0x02, 0x42,
-    0x03, 0x43, 0x0A, 0x05, 0x0C, 0x16
+    0x41, 0x42, 0x43, 0x44, 0x31, 0x32, 0x33, 0x34,
+    0xFF, 0xFF, 0x06, 0x21, 0x10
 };
-const size_t gnw_lion_controls_size = 22;
 
 // -----------------------------------------------------------------------------
 // Segments rendering info

@@ -22,8 +22,8 @@ namespace
 
     static const std::vector<std::string> c_inputs
     {
-        "mcu_k1", "mcu_k2", "mcu_k3", "mcu_k4",
-        "mcu_alpha", "mcu_beta", "mcu_acl"
+        "mcu_acl", "mcu_k1", "mcu_k2", "mcu_k3", "mcu_k4",
+        "mcu_alpha", "mcu_beta", 
     };
 
     const int StringIndex(const std::vector<std::string>& strings, const std::string string)
@@ -349,6 +349,8 @@ void Compile::DumpFirmwareSection()
 void Compile::DumpControlsSection()
 {
     std::string keys = "keys:";
+
+    std::vector<uint8_t> controls(c_names.size(), 0xFF);
     for (auto& key : m_gnw.GetConfig().keys)
     {
         int nIdx = StringIndex(c_names, key.name);
@@ -357,11 +359,11 @@ void Compile::DumpControlsSection()
 
         if (nIdx >= 0 && sIdx >= 0 && iIdx >= 0)
         {
-            m_dump[m_controls].Append(uint8_t(nIdx));
-            m_dump[m_controls].Append(uint8_t(sIdx << 4 | iIdx));
+            controls[nIdx] = uint8_t(sIdx << 4 | iIdx);
             keys += " " + key.name;
         }
     }
+    
     m_dump[m_controls].AddComment(keys);
-    m_dump[m_controls].AddSize();
+    m_dump[m_controls].Append(controls);
 }

@@ -1,16 +1,14 @@
 // -----------------------------------------------------------------------------
 // Controls configuration
 // keys: right_down right_up left_down left_up time game_b game_a alarm cheat_a acl
-// size: 20 bytes
+// size: 13 bytes
 // -----------------------------------------------------------------------------
 
 const uint8_t gnw_mmouse_controls[] PROGMEM =
 {
-    0x04, 0x30, 0x05, 0x31, 0x06, 0x32, 0x07, 0x33,
-    0x00, 0x40, 0x01, 0x41, 0x02, 0x42, 0x03, 0x43,
-    0x0A, 0x04, 0x0C, 0x16
+    0x41, 0x42, 0x43, 0x44, 0x31, 0x32, 0x33, 0x34,
+    0xFF, 0xFF, 0x05, 0xFF, 0x10
 };
-const size_t gnw_mmouse_controls_size = 20;
 
 // -----------------------------------------------------------------------------
 // Segments rendering info
