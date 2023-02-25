@@ -1,5 +1,14 @@
 #include "GNWEngine.h"
 
+static GameAndWatch* s_gnw = nullptr;
+
+ISR(TIMER3_COMPA_vect)
+{
+    if (s_gnw) s_gnw->Clock();
+}
+
+// -----------------------------------------------------------------------------
+
 GNWEngine::GNWEngine(Arduboy2Base& arduboy)
     : m_arduboy(arduboy)
     , m_segments(nullptr)
@@ -7,24 +16,32 @@ GNWEngine::GNWEngine(Arduboy2Base& arduboy)
     , m_sprites(nullptr)
     , m_gnw(this)
 {
+    s_gnw  = &m_gnw;
 }
 
 void GNWEngine::begin()
 {
     m_arduboy.begin();
+    m_arduboy.audio.begin();
 
     // TODO
 }
 
 void GNWEngine::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
 {
+    // init drawing
     m_segments = segments;
     m_graphics = graphics;
     m_sprites  = sprites;
 
+    // init GNW hardware
     m_gnw.PowerOn(controls, firmware);
 
-    // TODO
+    // init timer for 32768 Hz clock
+    TCCR3A = 0;
+    TCCR3B = (bit(WGM32) | bit(CS31));  // set CTC mode, clock prescaler is 8
+    OCR3A  = ((F_CPU / 8 / 32768) - 1); // set actual frequency 32787.885 Hz
+    TIMSK3 = bit(OCIE3A);               // Enable compare match interrupt
 }
 
 void GNWEngine::setInput(GameAndWatch::Control control, bool active)
@@ -51,7 +68,13 @@ void GNWEngine::drawLCD()
 
 void GNWEngine::SetBuzzerLevel(bool level)
 {
-    // TODO
+    if (m_arduboy.audio.enabled())
+    {
+        if (level)
+            SPEAKER_1_PORT |= bit(SPEAKER_1_BIT);
+        else
+            SPEAKER_1_PORT &= ~bit(SPEAKER_1_BIT);
+    }
 }
 
 // -----------------------------------------------------------------------------

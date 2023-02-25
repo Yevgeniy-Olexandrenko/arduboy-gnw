@@ -1,9 +1,9 @@
 #include "GNWEngine.h"
 #include "gnw_octopus.hpp"
 
-Arduboy2 arduboy;
+Arduboy2Base arduboy;
 GNWEngine gnw(arduboy);
-//Sprites sprites;
+Sprites sprites;
 
 void setup()
 {
@@ -15,21 +15,23 @@ void setup()
         gnw_octopus_sprites,
         gnw_octopus_firmware
     );
-
-    // TODO
-
-    // here we set the frame rate to 15, we do not need to run at
-    // default 60 and it saves us battery life
-    arduboy.setFrameRate(15);
+    
     arduboy.invert(true);
+    arduboy.setFrameRate(32);
 }
 
 void loop()
 {
-    if (arduboy.nextFrame())
+    gnw.setInput(GameAndWatch::RIGHT,  arduboy.pressed(RIGHT_BUTTON));
+    gnw.setInput(GameAndWatch::LEFT,   arduboy.pressed(LEFT_BUTTON));
+    gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON));
+    gnw.setInput(GameAndWatch::TIME,   arduboy.pressed(B_BUTTON));
+    
+    if (gnw.nextFrame())
     {
-        arduboy.clear();
         gnw.drawLCD();
         arduboy.display();
     }
+
+    arduboy.idle();
 }
