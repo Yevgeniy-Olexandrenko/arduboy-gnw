@@ -42,6 +42,7 @@ Compile::Compile(const GNW& gnw)
     , m_displayGraphics(nullptr)
     , m_controls(-1)
     , m_segments(-1)
+    , m_seg_idx (-1)
     , m_graphics(-1)
     , m_sprites (-1)
     , m_firmware(-1)
@@ -63,12 +64,18 @@ bool Compile::CompileAssets()
     {
         // prepare sections
         m_controls = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_controls", "Controls configuration"));
+        if (!m_gnw.GetConfig().segments.empty())
+        {
+            // optional: segment indices
+            m_seg_idx = m_dump.AddSection(new Dump::Enum(m_gnw.GetName() + "_segment", "Indexes of named segments"));
+        }
         m_segments = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_segments", "Segments rendering info"));
         m_graphics = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_graphics", "Graphics rendering info"));
         m_sprites  = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_sprites",  "Sprites for rendering"));
         m_firmware = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_firmware", "Firmware dump"));
         if (!m_gnw.GetConfig().firmware[1].empty())
         {
+            // optional: alternative fixed firmware
             m_fw_fixed = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_fw_fixed", "Firmware dump with fixes"));
         }
 
@@ -318,6 +325,20 @@ void Compile::DumpSegmentsSection()
             segmentsArray.Append(0xFF);
             segmentsArray.Append(0xFF);
             segmentsArray.Append(0xFF);
+        }
+    }
+
+    if (m_seg_idx != -1)
+    {
+        auto& seg_idxEnum = static_cast<Dump::Enum&>(m_dump[m_seg_idx]);
+        for (auto& segIdx : m_gnw.GetConfig().segments)
+        {
+            Segment segment;
+            segment.SetBySTR(segIdx.value);
+
+            int idx;
+            segment.GetAsINT(idx);
+            seg_idxEnum.Append(segIdx.name, uint8_t(idx), segIdx.value);
         }
     }
 }

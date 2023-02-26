@@ -15,10 +15,17 @@ public:
 			std::string input;
 		};
 
+		struct Segment
+		{
+			std::string name;
+			std::string value;
+		};
+
 		int exp = 0;
 		std::string firmware[2];
 		std::string cheats[2];
 		std::vector<Key> keys;
+		std::vector<Segment> segments;
 		std::vector<std::string> clones;
 	};
 

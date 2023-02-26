@@ -3,6 +3,15 @@
 #include <algorithm>
 #include <sstream>
 
+namespace
+{
+	char nibble(int v)
+	{
+		v &= 0x0F;
+		return (v < 0x0A ? '0' + v : 'A' + v - 0x0A);
+	};
+}
+
 // -----------------------------------------------------------------------------
 
 Dump::Section::Section(const std::string& name, const std::string& comment)
@@ -68,12 +77,6 @@ void Dump::Array::AddSize()
 
 void Dump::Array::Save(std::ostream& stream)
 {
-	auto nibble = [](int v) -> char
-	{
-		v &= 0x0F;
-		return (v < 0x0A ? '0' + v : 'A' + v - 0x0A);
-	};
-
 	std::stringstream ss;
 	ss << "size: " << m_bytes.size() << " bytes";
 	Section::AddComment(ss.str());
@@ -112,14 +115,36 @@ void Dump::Array::Save(std::ostream& stream)
 
 Dump::Enum::Enum(const std::string& name, const std::string& comment)
 	: Section(name, comment)
+	, nameSpace(0)
 {
+}
+
+void Dump::Enum::Append(const std::string& name, uint8_t value, const std::string& comment)
+{
+	m_values.push_back({ name, value, comment });
+	nameSpace = std::max(nameSpace, name.length());
 }
 
 void Dump::Enum::Save(std::ostream& stream)
 {
 	Section::Save(stream);
 
-	// TODO
+	stream << "enum class " << m_name << std::endl;
+	stream << "{" << std::endl;
+	int count = m_values.size();
+	for (auto& entry : m_values)
+	{
+		stream << std::string(4, ' ') << entry.name;
+		stream << std::string(nameSpace - entry.name.length() + 1, ' ');
+		stream << "= 0x";
+		stream << nibble(entry.value >> 4) << nibble(entry.value);
+		if (--count > 0) 
+			stream << ','; else stream << ' ';
+		if (!entry.comment.empty()) 
+			stream << " // " << entry.comment;
+		stream << std::endl;
+	}
+	stream << "};" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

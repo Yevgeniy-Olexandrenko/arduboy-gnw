@@ -51,6 +51,7 @@ private:
 	Dump m_dump;
 	int  m_controls;
 	int  m_segments;
+	int  m_seg_idx;
 	int  m_graphics;
 	int  m_sprites;
 	int  m_firmware;

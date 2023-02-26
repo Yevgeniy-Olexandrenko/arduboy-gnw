@@ -93,6 +93,13 @@ void GNW::ParseConfig(const std::string& ini)
 				}
 			}
 
+			pos = key.find("segment_");
+			if (pos != std::string::npos)
+			{
+				std::string name = key.substr(pos + 8);
+				m_config.segments.push_back({ trim(name), trim(val) });
+			}
+
 			if (key == "clone") m_config.clones.push_back(val);
 		}
 	}

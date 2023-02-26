@@ -33,17 +33,23 @@ public:
 		void AddSize();
 		void Save(std::ostream& stream) override;
 
-	private:
+	protected:
 		std::vector<uint8_t> m_bytes;
 		bool m_size;
 	};
 
+	
 	class Enum : public Section
 	{
+		struct Entry { std::string name; uint8_t value; std::string comment; };
 	public:
 		Enum(const std::string& name, const std::string& comment);
-
+		void Append(const std::string& name, uint8_t value, const std::string& comment = "");
 		void Save(std::ostream& stream) override;
+
+	protected:
+		std::vector<Entry> m_values;
+		size_t nameSpace;
 	};
 
 	using Sections = std::vector<std::shared_ptr<Section>>;
