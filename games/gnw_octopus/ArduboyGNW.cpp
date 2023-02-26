@@ -43,17 +43,17 @@ void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, G
     TIMSK3 = bit(OCIE3A);               // Enable compare match interrupt
 }
 
-bool ArduboyGNW::setInput(GameAndWatch::Control control, bool active)
+void ArduboyGNW::setInput(GameAndWatch::Control control, bool active)
 {
     m_gnw.SetControl(control, active);
-    return m_gnw.GetControl(control);
 }
 
-void ArduboyGNW::toggleInput(GameAndWatch::Control control)
+void ArduboyGNW::clearInput()
 {
-    m_gnw.SetControl(control, true);
-    delay(100);
-    m_gnw.SetControl(control, false);
+    for (int i = 0; i < GameAndWatch::Control::count; ++i)
+    {
+        m_gnw.SetControl(i, false);
+    }
 }
 
 bool ArduboyGNW::segmentVisible(int h, int o, int s) const

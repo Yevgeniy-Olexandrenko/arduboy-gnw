@@ -49,7 +49,6 @@ public:
 
     void PowerOn(const uint8_t* controls, const uint8_t* firmware);
     void SetControl(Control control, bool active);
-    bool GetControl(Control control) const;
 
     void Clock();
     bool IsReset() const;

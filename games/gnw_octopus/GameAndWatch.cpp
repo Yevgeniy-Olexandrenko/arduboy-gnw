@@ -39,11 +39,6 @@ void GameAndWatch::SetControl(Control control, bool active)
     }
 }
 
-bool GameAndWatch::GetControl(Control control) const
-{
-    return m_lines[control].active;
-}
-
 void GameAndWatch::Clock()
 {
     m_mcu.Clock();

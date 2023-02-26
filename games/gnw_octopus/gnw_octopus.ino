@@ -1,13 +1,14 @@
 #include "ArduboyGNW.h"
 #include "gnw_octopus.hpp"
 
-Arduboy2Base arduboy;
-ArduboyGNW gnw(arduboy);
-
 enum class State
 {
     None, Demo, GameA, GameB, Loss
 };
+
+Arduboy2Base arduboy;
+ArduboyGNW gnw(arduboy);
+State state;
 
 State detectState()
 {
@@ -26,6 +27,11 @@ State detectState()
     return State::None;
 }
 
+bool anyButtonPressed()
+{
+    return arduboy.anyPressed(LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON | A_BUTTON | B_BUTTON);
+}
+
 void setup()
 {
     gnw.begin();
@@ -36,40 +42,60 @@ void setup()
         gnw_octopus_sprites,
         gnw_octopus_firmware
     );
+    state = State::None;
 }
 
 void loop()
 {
-    gnw.setInput(GameAndWatch::ACL,    arduboy.pressed(UP_BUTTON));
-    gnw.setInput(GameAndWatch::TIME,   arduboy.pressed(DOWN_BUTTON));
-    gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON));
-    gnw.setInput(GameAndWatch::GAME_B, arduboy.pressed(B_BUTTON));
-    gnw.setInput(GameAndWatch::RIGHT,  arduboy.pressed(RIGHT_BUTTON));
-    gnw.setInput(GameAndWatch::LEFT,   arduboy.pressed(LEFT_BUTTON));    
+    State nextState = detectState();
+    if (state != nextState)
+    {
+        // enter new state
+        if (!anyButtonPressed())
+        {
+            state = nextState;
+            gnw.clearInput();
+        }
+    }
+    else
+    {
+        // stay in current state
+        switch (state)
+        {
+            case State::None:
+                arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); // black
+                gnw.setInput(GameAndWatch::TIME, true);
+                break;
 
-    if (gnw.nextFrame())
+            case State::Demo:
+                arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_OFF);  // green
+                gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON));
+                gnw.setInput(GameAndWatch::GAME_B, arduboy.pressed(B_BUTTON));
+                break;
+
+            case State::GameA:
+                arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_ON);   // cyan
+                gnw.setInput(GameAndWatch::LEFT,   arduboy.anyPressed(LEFT_BUTTON  | A_BUTTON));
+                gnw.setInput(GameAndWatch::RIGHT,  arduboy.anyPressed(RIGHT_BUTTON | B_BUTTON));
+                break;
+
+            case State::GameB:
+                arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_ON);   // magenta
+                gnw.setInput(GameAndWatch::LEFT,   arduboy.anyPressed(LEFT_BUTTON  | A_BUTTON));
+                gnw.setInput(GameAndWatch::RIGHT,  arduboy.anyPressed(RIGHT_BUTTON | B_BUTTON));
+                break;
+
+            case State::Loss:
+                arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_OFF);  // red
+                gnw.setInput(GameAndWatch::TIME, anyButtonPressed());
+                break;
+        }
+    }
+
+    if (state != State::None && gnw.nextFrame())
     {
         gnw.drawLCD();
         arduboy.display();
-    }
-
-    switch (detectState())
-    {
-        case State::None:
-            arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); // black
-            break;
-        case State::Demo:
-            arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_OFF);  // green
-            break;
-        case State::GameA:
-            arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_ON);   // cyan
-            break;
-        case State::GameB:
-            arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_ON);   // magenta
-            break;
-        case State::Loss:
-            arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_OFF);  // red
-            break;
     }
     arduboy.idle();
 }
