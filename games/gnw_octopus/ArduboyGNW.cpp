@@ -24,7 +24,6 @@ void ArduboyGNW::begin()
     m_arduboy.begin();
     m_arduboy.audio.begin();
     m_arduboy.setFrameRate(32);
-    m_arduboy.invert(true);
 }
 
 void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
@@ -57,22 +56,14 @@ void ArduboyGNW::toggleInput(GameAndWatch::Control control)
     m_gnw.SetControl(control, false);
 }
 
-bool ArduboyGNW::inReset() const
+bool ArduboyGNW::segmentVisible(int h, int o, int s) const
 {
-    m_gnw.IsReset();
+    return m_gnw.IsSegmentVisible(h, 0, s);
 }
 
-bool ArduboyGNW::inGame() const
+bool ArduboyGNW::segmentVisible(int i) const
 {
-    static int counter = 0;
-    if(m_arduboy.everyXFrames(1))
-    {
-      if (m_gnw.IsPowerDown()) 
-          counter = (32 / 4);
-      else if (counter)
-          counter--;
-    }
-    return !(counter > 0);
+    return m_gnw.IsSegmentVisible(i);
 }
 
 bool ArduboyGNW::nextFrame()
@@ -86,6 +77,7 @@ bool ArduboyGNW::nextFrame()
 
 void ArduboyGNW::drawLCD()
 {
+    m_arduboy.invert(true);
     DrawGraphics();
     DrawSegments();
 }

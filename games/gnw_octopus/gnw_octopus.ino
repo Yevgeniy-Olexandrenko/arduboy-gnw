@@ -3,8 +3,28 @@
 
 Arduboy2Base arduboy;
 ArduboyGNW gnw(arduboy);
-Sprites sprites;
-bool gameplay;
+
+enum class State
+{
+    None, Demo, GameA, GameB, Loss
+};
+
+State detectState()
+{
+    bool time   = gnw.segmentVisible(int(gnw_octopus_segment::time  ));
+    bool game_a = gnw.segmentVisible(int(gnw_octopus_segment::game_a));
+    bool game_b = gnw.segmentVisible(int(gnw_octopus_segment::game_b));
+    bool death  = gnw.segmentVisible(int(gnw_octopus_segment::death ));
+    bool man1   = gnw.segmentVisible(int(gnw_octopus_segment::man1  ));
+    bool man2   = gnw.segmentVisible(int(gnw_octopus_segment::man2  ));
+    bool man3   = gnw.segmentVisible(int(gnw_octopus_segment::man3  ));
+
+    if (time && !game_a && !game_b) return State::Demo;
+    if (!time && death && !man1 && !man2 && !man3) return State::Loss;
+    if (!time && game_a) return State::GameA;
+    if (!time && game_b) return State::GameB;
+    return State::None;
+}
 
 void setup()
 {
@@ -16,65 +36,16 @@ void setup()
         gnw_octopus_sprites,
         gnw_octopus_firmware
     );
-#if 0
-    while (gnw.inReset())
-    {
-        arduboy.idle();
-    }
-
-    gameplay = false;
-    gnw.toggleInput(GameAndWatch::TIME);
-#endif
 }
 
 void loop()
 {
-#if 0
-    if (gnw.inGame() == gameplay)
-    {
-        if (!gameplay)
-        {
-            gnw.setInput(GameAndWatch::TIME,  false);
-            gnw.setInput(GameAndWatch::RIGHT, false);
-            gnw.setInput(GameAndWatch::LEFT,  false);
-
-            if (gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON)))
-            {
-                gameplay = true;
-            }
-            if (gnw.setInput(GameAndWatch::GAME_B, arduboy.pressed(B_BUTTON)))
-            {
-                gameplay = true;
-            }
-        }
-        else
-        {
-            gnw.setInput(GameAndWatch::TIME,   false);
-            gnw.setInput(GameAndWatch::GAME_A, false);
-            gnw.setInput(GameAndWatch::GAME_B, false);
-            
-            gnw.setInput(GameAndWatch::RIGHT, arduboy.pressed(RIGHT_BUTTON) | arduboy.pressed(B_BUTTON));
-            gnw.setInput(GameAndWatch::LEFT,  arduboy.pressed(LEFT_BUTTON)  | arduboy.pressed(A_BUTTON));
-        }
-    }
-    else
-    {
-        if (gameplay)
-        {
-            if (gnw.setInput(GameAndWatch::TIME, arduboy.pressed(A_BUTTON) | arduboy.pressed(B_BUTTON)))
-            {
-                gameplay = false;
-            }
-        }
-    }
-#else
     gnw.setInput(GameAndWatch::ACL,    arduboy.pressed(UP_BUTTON));
     gnw.setInput(GameAndWatch::TIME,   arduboy.pressed(DOWN_BUTTON));
     gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON));
     gnw.setInput(GameAndWatch::GAME_B, arduboy.pressed(B_BUTTON));
     gnw.setInput(GameAndWatch::RIGHT,  arduboy.pressed(RIGHT_BUTTON));
     gnw.setInput(GameAndWatch::LEFT,   arduboy.pressed(LEFT_BUTTON));    
-#endif
 
     if (gnw.nextFrame())
     {
@@ -82,6 +53,23 @@ void loop()
         arduboy.display();
     }
 
-    arduboy.digitalWriteRGB(BLUE_LED, gnw.inGame() ? RGB_ON : RGB_OFF);
+    switch (detectState())
+    {
+        case State::None:
+            arduboy.digitalWriteRGB(RGB_OFF, RGB_OFF, RGB_OFF); // black
+            break;
+        case State::Demo:
+            arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_OFF);  // green
+            break;
+        case State::GameA:
+            arduboy.digitalWriteRGB(RGB_OFF, RGB_ON, RGB_ON);   // cyan
+            break;
+        case State::GameB:
+            arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_ON);   // magenta
+            break;
+        case State::Loss:
+            arduboy.digitalWriteRGB(RGB_ON, RGB_OFF, RGB_OFF);  // red
+            break;
+    }
     arduboy.idle();
 }
