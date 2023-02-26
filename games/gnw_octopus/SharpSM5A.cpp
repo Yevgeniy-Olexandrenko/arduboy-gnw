@@ -12,8 +12,7 @@ SharpSM5A::SharpSM5A(IO* io)
 void SharpSM5A::PowerOn(const uint8_t* firmware)
 {
     m_rom = firmware;
-
-    //	TODO: carefully check behavior with documentation
+    
     m_stack = 0;
     m_pc = 0;
     m_prev_pc = 0;
@@ -26,34 +25,35 @@ void SharpSM5A::PowerOn(const uint8_t* firmware)
     m_c = 0;
     m_skip = false;
     m_div = 0;
-    m_1s = false;
+    m_gamma = false;
     m_bp = 0;
     m_halt = false;
+
     memset(m_ox, 0, sizeof(m_ox));
     memset(m_o, 0, sizeof(m_o));
-    m_cn = 0;
     m_mx = 0;
     m_cb = 0;
     m_rsub = false;
 
     m_paramRead = false;
+    Reset();
 }
 
 void SharpSM5A::Reset()
 {
-    //	TODO: carefully check behavior with documentation
     m_skip = false;
     m_halt = false;
     m_op = 0;
     m_prev_op = 0;
-    do_branch_zero_cb(0x0f, 0x00);
+    reset_vector();
     m_prev_pc = m_pc;
     m_bp = 1;
     m_io->WrPortR(0);
 
     push_stack();
     op_idiv();
-    m_1s = true;
+    m_gamma = true;
+    m_cb = 0;
     m_rsub = false;
 
     // ACL time is 0.5 second
@@ -136,12 +136,12 @@ bool SharpSM5A::IsWakeUpOccur()
     bool k_active = ((m_io->RdPortK() & 0x0F) != 0);
 
     // in halt mode, wake up after 1S signal or K input
-    if (k_active || m_1s)
+    if (k_active || m_gamma)
     {
         // note: official doc warns that Bl/Bm and the stack are undefined
         // after waking up, but we leave it unchanged
         m_halt = false;
-        do_branch_zero_cb(0x00, 0x00);
+        wakeup_vector();
         return true;
     }
     return false;
@@ -159,8 +159,8 @@ void SharpSM5A::IncrementDivider()
 {
     m_div = ((m_div + 1) & 0x7FFF);
 
-    // 1S signal on overflow(falling edge of F1)
-    if (m_div == 0) m_1s = true;
+    // 1S(gamma) signal on overflow(falling edge of F1)
+    if (m_div == 0) m_gamma = true;
 
     //	update lcd every 15.625 ms
     if ((m_div & 0x01FF) == 0)
@@ -417,9 +417,8 @@ void SharpSM5A::op_sbm()
 
 void SharpSM5A::op_atbp()
 {
-	// ATBP: output ACC to BP(internal LCD backplate signal) and set CN with ACC3
-	m_bp = (m_acc & 0x01);
-	m_cn = ((m_acc >> 3) & 0x01);
+	// ATBP: output ACC to BP LCD flag(s)
+	m_bp = m_acc;
 }
 
 void SharpSM5A::op_add()
@@ -478,8 +477,8 @@ void SharpSM5A::op_tam()
 void SharpSM5A::op_tis()
 {
 	// TIS: skip next if 1S(gamma flag) is clear, reset it after
-	m_skip = !m_1s;
-	m_1s = false;
+	m_skip = !m_gamma;
+	m_gamma = false;
 }
 
 void SharpSM5A::op_ptw()
@@ -527,7 +526,7 @@ void SharpSM5A::op_lbl()
 void SharpSM5A::op_comcn()
 {
 	// COMCN: complement CN flag
-	m_cn ^= 1;
+	m_bp ^= 0x08;
 }
 
 void SharpSM5A::op_pdtw()
@@ -670,13 +669,18 @@ void SharpSM5A::pop_stack()
 void SharpSM5A::do_branch(uint8_t pu, uint8_t pm, uint8_t pl)
 {
 	// set new PC(Pu/Pm/Pl)
-	m_pc = (((pu << 10) | (pm << 6 & 0x3C0) | (pl & 0x03F)) & 0x07FF);
+	m_pc = (((pu << 10) | ((pm << 6) & 0x3C0) | (pl & 0x03F)) & 0x07FF);
 }
 
-void SharpSM5A::do_branch_zero_cb(uint8_t pm, uint8_t pl)
+void SharpSM5A::reset_vector()
 {
-	m_cb = 0;
-	do_branch(m_cb, pm, pl);
+    do_branch(0x00, 0x0F, 0x00);
+}
+
+void SharpSM5A::wakeup_vector()
+{ 
+    m_cb = 0;
+    do_branch(0x00, 0x00, 0x00); 
 }
 
 uint8_t SharpSM5A::bitmask(uint16_t param)
@@ -716,5 +720,6 @@ uint8_t SharpSM5A::get_digit()
         0x0b, 0x09, 0x07, 0x0f, 0x0d, 0x0e, 0x0e, 0x0b,
         0x0f, 0x0f, 0x04, 0x00, 0x0d, 0x0e, 0x04, 0x00
     };
-    return pgm_read_byte(lut_digits + (m_cn << 4 | m_acc)) | (~m_cn & m_mx);
+    uint8_t cn = ((m_bp >> 3) & 0x01);
+    return pgm_read_byte(lut_digits + (cn << 4 | m_acc)) | (~cn & m_mx);
 }

@@ -65,7 +65,8 @@ private:
     void    push_stack();
     void    pop_stack();
     void    do_branch(uint8_t pu, uint8_t pm, uint8_t pl);
-    void    do_branch_zero_cb(uint8_t pm, uint8_t pl);
+    void    reset_vector();
+    void    wakeup_vector();
     uint8_t bitmask(uint16_t param);
     uint8_t ram_r();
     void    ram_w(uint8_t data);
@@ -80,10 +81,10 @@ private:
     uint16_t m_aclClocks;
     bool m_paramRead;
 
-    uint8_t m_cb;
+    uint8_t  m_cb;
     uint16_t m_pc, m_prev_pc;   // programm counter
     uint16_t m_op, m_prev_op;   // operation code
-    uint8_t m_param;            // operation parameter
+    uint8_t  m_param;           // operation parameter
     bool m_halt;                // mcu is halted flag
     bool m_skip;                // skip next opcode flag
 
@@ -92,7 +93,6 @@ private:
         
     uint8_t m_ox[k_mcuLcdOCount];   // W' latch, max 9
     uint8_t m_o[k_mcuLcdOCount];    // W latch
-    uint8_t m_cn;
     uint8_t m_bp;
     uint8_t m_mx;
 
@@ -102,5 +102,5 @@ private:
     uint8_t m_c;
 
     uint16_t m_div;
-    bool m_1s;
+    bool m_gamma;
 };
