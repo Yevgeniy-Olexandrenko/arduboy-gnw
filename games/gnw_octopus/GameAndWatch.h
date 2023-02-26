@@ -49,7 +49,12 @@ public:
 
     void PowerOn(const uint8_t* controls, const uint8_t* firmware);
     void SetControl(Control control, bool active);
+    bool GetControl(Control control) const;
+
     void Clock();
+    bool IsReset() const;
+    bool IsPowerDown() const;
+
     bool HasNewFrame();
     bool IsSegmentVisible(int h, int o, int s) const;
     bool IsSegmentVisible(int i) const;

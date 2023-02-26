@@ -1,4 +1,4 @@
-#include "GNWEngine.h"
+#include "ArduboyGNW.h"
 
 static GameAndWatch* s_gnw = nullptr;
 
@@ -9,7 +9,7 @@ ISR(TIMER3_COMPA_vect)
 
 // -----------------------------------------------------------------------------
 
-GNWEngine::GNWEngine(Arduboy2Base& arduboy)
+ArduboyGNW::ArduboyGNW(Arduboy2Base& arduboy)
     : m_arduboy(arduboy)
     , m_segments(nullptr)
     , m_graphics(nullptr)
@@ -19,15 +19,15 @@ GNWEngine::GNWEngine(Arduboy2Base& arduboy)
     s_gnw  = &m_gnw;
 }
 
-void GNWEngine::begin()
+void ArduboyGNW::begin()
 {
     m_arduboy.begin();
     m_arduboy.audio.begin();
-
-    // TODO
+    m_arduboy.setFrameRate(32);
+    m_arduboy.invert(true);
 }
 
-void GNWEngine::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
+void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
 {
     // init drawing
     m_segments = segments;
@@ -44,12 +44,38 @@ void GNWEngine::powerOn(GNWData controls, GNWData segments, GNWData graphics, GN
     TIMSK3 = bit(OCIE3A);               // Enable compare match interrupt
 }
 
-void GNWEngine::setInput(GameAndWatch::Control control, bool active)
+bool ArduboyGNW::setInput(GameAndWatch::Control control, bool active)
 {
     m_gnw.SetControl(control, active);
+    return m_gnw.GetControl(control);
 }
 
-bool GNWEngine::nextFrame()
+void ArduboyGNW::toggleInput(GameAndWatch::Control control)
+{
+    m_gnw.SetControl(control, true);
+    delay(100);
+    m_gnw.SetControl(control, false);
+}
+
+bool ArduboyGNW::inReset() const
+{
+    m_gnw.IsReset();
+}
+
+bool ArduboyGNW::inGame() const
+{
+    static int counter = 0;
+    if(m_arduboy.everyXFrames(1))
+    {
+      if (m_gnw.IsPowerDown()) 
+          counter = (32 / 4);
+      else if (counter)
+          counter--;
+    }
+    return !(counter > 0);
+}
+
+bool ArduboyGNW::nextFrame()
 {
     if (m_arduboy.nextFrame())
     {
@@ -58,7 +84,7 @@ bool GNWEngine::nextFrame()
     return false;
 }
 
-void GNWEngine::drawLCD()
+void ArduboyGNW::drawLCD()
 {
     DrawGraphics();
     DrawSegments();
@@ -66,7 +92,7 @@ void GNWEngine::drawLCD()
 
 // -----------------------------------------------------------------------------
 
-void GNWEngine::SetBuzzerLevel(bool level)
+void ArduboyGNW::SetBuzzerLevel(bool level)
 {
     if (m_arduboy.audio.enabled())
     {
@@ -79,7 +105,7 @@ void GNWEngine::SetBuzzerLevel(bool level)
 
 // -----------------------------------------------------------------------------
 
-void GNWEngine::DrawGraphics()
+void ArduboyGNW::DrawGraphics()
 {
     for (uint8_t block = 0; block < 128; ++block)
     {
@@ -100,7 +126,7 @@ void GNWEngine::DrawGraphics()
     }
 }
 
-void GNWEngine::DrawSegments()
+void ArduboyGNW::DrawSegments()
 {
     for (uint8_t segment = 0; segment < 72; ++segment)
     {
@@ -113,5 +139,3 @@ void GNWEngine::DrawSegments()
         }
     }
 }
-
-// -----------------------------------------------------------------------------

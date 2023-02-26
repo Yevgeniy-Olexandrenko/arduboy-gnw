@@ -3,6 +3,8 @@
 #include <string.h>
 #include <avr/pgmspace.h>
 
+// -----------------------------------------------------------------------------
+
 SharpSM5A::SharpSM5A(IO* io)
     : m_io(io)
 {}
@@ -109,18 +111,22 @@ void SharpSM5A::Clock()
     }
 }
 
-void SharpSM5A::IncrementPC()
+bool SharpSM5A::IsInAclProcedure() const
 {
-    // PL(program counter low 6 bits) is a simple LFSR: newbit = (bit0==bit1)
-    // PU,PM(high bits) specify page, PL specifies steps within page
-    int feed = ((((m_pc >> 1) ^ m_pc) & 0x01) ? 0x00 : 0x20);
-    m_pc = (feed | ((m_pc >> 1) & 0x1F) | (m_pc & ~0x3F));
+    return (m_aclClocks > 0);
 }
+
+bool SharpSM5A::IsInStandbyMode() const
+{
+    return m_halt;
+}
+
+// -----------------------------------------------------------------------------
 
 bool SharpSM5A::IsACLOccur()
 {
     if (m_io->RdAcl()) Reset();
-    return m_aclClocks > 0;
+    return (m_aclClocks > 0);
 }
 
 bool SharpSM5A::IsWakeUpOccur()
@@ -141,7 +147,32 @@ bool SharpSM5A::IsWakeUpOccur()
     return false;
 }
 
-// -----------------------------------------------------------------------------
+void SharpSM5A::IncrementPC()
+{
+    // PL(program counter low 6 bits) is a simple LFSR: newbit = (bit0==bit1)
+    // PU,PM(high bits) specify page, PL specifies steps within page
+    int feed = ((((m_pc >> 1) ^ m_pc) & 0x01) ? 0x00 : 0x20);
+    m_pc = (feed | ((m_pc >> 1) & 0x1F) | (m_pc & ~0x3F));
+}
+
+void SharpSM5A::IncrementDivider()
+{
+    m_div = ((m_div + 1) & 0x7FFF);
+
+    // 1S signal on overflow(falling edge of F1)
+    if (m_div == 0) m_1s = true;
+
+    //	update lcd every 15.625 ms
+    if ((m_div & 0x01FF) == 0)
+    {
+        for (int o = 0; o < k_mcuLcdOCount; ++o)
+        {
+            uint8_t h0segments = (m_bp ? m_o[o] : 0);
+            uint8_t h1segments = (m_bp ? m_ox[o] : 0);
+            m_io->WrLCD(o, h1segments << 4 | h0segments);
+        }
+    }
+}
 
 void SharpSM5A::ExecuteInstruction()
 {
@@ -222,25 +253,6 @@ void SharpSM5A::ExecuteInstruction()
             break;
         }
         break;
-    }
-}
-
-void SharpSM5A::IncrementDivider()
-{
-    m_div = ((m_div + 1) & 0x7FFF);
-
-    // 1S signal on overflow(falling edge of F1)
-    if (m_div == 0) m_1s = true;
-
-    //	update lcd every 15.625 ms
-    if ((m_div & 0x01FF) == 0)
-    {
-        for (int o = 0; o < k_mcuLcdOCount; ++o)
-        {
-            uint8_t h0segments = (m_bp ? m_o[o] : 0);
-            uint8_t h1segments = (m_bp ? m_ox[o] : 0);
-            m_io->WrLCD(o, h1segments << 4 | h0segments);
-        }
     }
 }
 

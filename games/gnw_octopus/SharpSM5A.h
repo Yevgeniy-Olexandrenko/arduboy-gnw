@@ -29,13 +29,17 @@ public:
     void Reset();
     void Clock();
 
+    bool IsInAclProcedure() const;
+    bool IsInStandbyMode() const;
+
 private:
     bool IsACLOccur();
-    void IncrementPC();
     bool IsWakeUpOccur();
-    void ExecuteInstruction();
-    void IncrementDivider();
 
+    void IncrementPC();
+    void IncrementDivider();
+    void ExecuteInstruction();
+   
     uint8_t RdROM(uint16_t address);
     uint8_t RdRAM(uint16_t address);
     void    WrRAM(uint16_t addres, uint8_t data);
@@ -55,6 +59,7 @@ private:
     void op_decb();  void op_comcb(); void op_rtn0();  void op_rtn1();
     void op_cend();  void op_dta();   void op_err();
 
+private:
     void    set_su(uint8_t su);
     uint8_t get_su();
     void    push_stack();

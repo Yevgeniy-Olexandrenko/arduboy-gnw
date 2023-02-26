@@ -8,14 +8,17 @@
 
 using GNWData = const uint8_t*;
 
-class GNWEngine : public GameAndWatch::Handler
+class ArduboyGNW : public GameAndWatch::Handler
 {
 public:
-    GNWEngine(Arduboy2Base& arduboy);
+    ArduboyGNW(Arduboy2Base& arduboy);
 
     void begin();
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
-    void setInput(GameAndWatch::Control control, bool active);
+    bool setInput(GameAndWatch::Control control, bool active);
+    void toggleInput(GameAndWatch::Control control);
+    bool inReset() const;
+    bool inGame() const;
     bool nextFrame();
     void drawLCD();
 

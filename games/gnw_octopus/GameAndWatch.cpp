@@ -39,9 +39,24 @@ void GameAndWatch::SetControl(Control control, bool active)
     }
 }
 
+bool GameAndWatch::GetControl(Control control) const
+{
+    return m_lines[control].active;
+}
+
 void GameAndWatch::Clock()
 {
     m_mcu.Clock();
+}
+
+bool GameAndWatch::IsReset() const
+{
+    return m_mcu.IsInAclProcedure();
+}
+
+bool GameAndWatch::IsPowerDown() const
+{
+    return m_mcu.IsInStandbyMode();
 }
 
 bool GameAndWatch::HasNewFrame()
