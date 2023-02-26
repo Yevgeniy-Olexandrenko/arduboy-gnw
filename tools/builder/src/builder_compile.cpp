@@ -62,14 +62,14 @@ bool Compile::CompileAssets()
     if (OpenLCD())
     {
         // prepare sections
-        m_controls = m_dump.AddSection(m_gnw.GetName() + "_controls", "Controls configuration");
-        m_segments = m_dump.AddSection(m_gnw.GetName() + "_segments", "Segments rendering info");
-        m_graphics = m_dump.AddSection(m_gnw.GetName() + "_graphics", "Graphics rendering info");
-        m_sprites  = m_dump.AddSection(m_gnw.GetName() + "_sprites",  "Sprites for rendering");
-        m_firmware = m_dump.AddSection(m_gnw.GetName() + "_firmware", "Firmware dump");
+        m_controls = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_controls", "Controls configuration"));
+        m_segments = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_segments", "Segments rendering info"));
+        m_graphics = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_graphics", "Graphics rendering info"));
+        m_sprites  = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_sprites",  "Sprites for rendering"));
+        m_firmware = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_firmware", "Firmware dump"));
         if (!m_gnw.GetConfig().firmware[1].empty())
         {
-            m_fw_fixed = m_dump.AddSection(m_gnw.GetName() + "_fw_fixed", "Firmware dump with fixes");
+            m_fw_fixed = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_fw_fixed", "Firmware dump with fixes"));
         }
 
         // do all work
@@ -240,9 +240,10 @@ void Compile::RenderGraphicsSprites()
 
 void Compile::DumpSprite(const Sprite& sprite)
 {
-    m_dump[m_sprites].Append(uint8_t(sprite->GetW()));
-    m_dump[m_sprites].Append(uint8_t(sprite->GetH()));
+    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_sprites]);
 
+    spritesArray.Append(uint8_t(sprite->GetW()));
+    spritesArray.Append(uint8_t(sprite->GetH()));
     for (size_t p = 0; p < sprite->GetH() / 8; ++p)
     {
         for (size_t x = 0; x < sprite->GetW(); ++x)
@@ -256,19 +257,21 @@ void Compile::DumpSprite(const Sprite& sprite)
                     byte |= 1 << b;
                 }
             }
-            m_dump[m_sprites].Append(byte);
+            spritesArray.Append(byte);
         }
     }
 }
 
 void Compile::DumpSpritesSection()
 {
+    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_sprites]);
+
     for (auto& pair : m_spriteIdToSegmentsSprite)
     {
         auto& spriteId = pair.first;
         auto& sprite = pair.second;
 
-        m_spriteIdToOffset[spriteId] = m_dump[m_sprites].GetOffset();
+        m_spriteIdToOffset[spriteId] = spritesArray.GetOffset();
         DumpSprite(sprite);
 
 #if SAVE_SPRITES_TO_FILES
@@ -282,7 +285,7 @@ void Compile::DumpSpritesSection()
         auto& spriteId = pair.first;
         auto& sprite = pair.second;
 
-        m_spriteIdToOffset[spriteId] = m_dump[m_sprites].GetOffset();
+        m_spriteIdToOffset[spriteId] = spritesArray.GetOffset();
         DumpSprite(sprite);
 
 #if SAVE_SPRITES_TO_FILES
@@ -294,6 +297,8 @@ void Compile::DumpSpritesSection()
 
 void Compile::DumpSegmentsSection()
 {
+    auto& segmentsArray = static_cast<Dump::Array&>(m_dump[m_segments]);
+
     for (SegmentId segmentId = 0; segmentId <= (8 << 3 | 3 << 1 | 1); ++segmentId)
     {
         if (m_segmentIdToSegment.find(segmentId) != m_segmentIdToSegment.end())
@@ -302,47 +307,52 @@ void Compile::DumpSegmentsSection()
             auto& spriteId = m_segmentIdToSpriteId[segmentId];
             auto& offset   = m_spriteIdToOffset[spriteId];
 
-            m_dump[m_segments].Append(uint8_t(segment.bounds.x0));
-            m_dump[m_segments].Append(uint8_t(segment.bounds.y0));
-            m_dump[m_segments].Append(uint8_t(offset >> 0));
-            m_dump[m_segments].Append(uint8_t(offset >> 8));
+            segmentsArray.Append(uint8_t(segment.bounds.x0));
+            segmentsArray.Append(uint8_t(segment.bounds.y0));
+            segmentsArray.Append(uint8_t(offset >> 0));
+            segmentsArray.Append(uint8_t(offset >> 8));
         }
         else
         {
-            m_dump[m_segments].Append(0xFF);
-            m_dump[m_segments].Append(0xFF);
-            m_dump[m_segments].Append(0xFF);
-            m_dump[m_segments].Append(0xFF);
+            segmentsArray.Append(0xFF);
+            segmentsArray.Append(0xFF);
+            segmentsArray.Append(0xFF);
+            segmentsArray.Append(0xFF);
         }
     }
 }
 
 void Compile::DumpGraphicsSection()
 {
+    auto& graphicsArray = static_cast<Dump::Array&>(m_dump[m_graphics]);
+
     for (GraphicsId graphicsId = 0; graphicsId < (lcdH * lcdW / (8 * 8)); ++graphicsId)
     {
         auto& spriteId = m_graphicsIdToSpriteId[graphicsId];
         if (spriteId == SpriteId(0x8BFF08F2))
         {
             // empty block
-            m_dump[m_graphics].Append(0x00);
-            m_dump[m_graphics].Append(0x00);
+            graphicsArray.Append(0x00);
+            graphicsArray.Append(0x00);
         }
         else
         {
             Offset offset = m_spriteIdToOffset[spriteId];
-            m_dump[m_graphics].Append(uint8_t(offset >> 0));
-            m_dump[m_graphics].Append(uint8_t(offset >> 8));
+            graphicsArray.Append(uint8_t(offset >> 0));
+            graphicsArray.Append(uint8_t(offset >> 8));
         }
     }
 }
 
 void Compile::DumpFirmwareSection()
 {
-    m_dump[m_firmware].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[0]);
+    auto& firmwareArray = static_cast<Dump::Array&>(m_dump[m_firmware]);
+    firmwareArray.Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[0]);
+
     if (m_fw_fixed != -1)
     {
-        m_dump[m_fw_fixed].Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[1]);
+        auto& fw_fixedArray = static_cast<Dump::Array&>(m_dump[m_fw_fixed]);
+        fw_fixedArray.Append(m_gnw.GetAssetsPath() + m_gnw.GetConfig().firmware[1]);
     }
 }
 
@@ -364,6 +374,7 @@ void Compile::DumpControlsSection()
         }
     }
     
-    m_dump[m_controls].AddComment(keys);
-    m_dump[m_controls].Append(controls);
+    auto& controlsArray = static_cast<Dump::Array&>(m_dump[m_controls]);
+    controlsArray.AddComment(keys);
+    controlsArray.Append(controls);
 }
