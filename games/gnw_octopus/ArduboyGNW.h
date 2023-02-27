@@ -15,11 +15,13 @@ public:
 
     void begin();
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
+
     void setInput(GameAndWatch::Control control, bool active);
     void clearInput();
-    void toggleInput(GameAndWatch::Control control);
+
     bool segmentVisible(int h, int o, int s) const;
     bool segmentVisible(int i) const;
+    
     bool nextFrame();
     void drawLCD();
 

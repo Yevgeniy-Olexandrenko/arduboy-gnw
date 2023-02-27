@@ -19,6 +19,8 @@ enum class gnw_octopus_segment
     time   = 0x30, // 6.0.0
     game_a = 0x19, // 3.1.0
     game_b = 0x1D, // 3.1.1
+    take   = 0x0E, // 1.2.1
+    unload = 0x2E, // 5.2.1
     death  = 0x11, // 2.1.0
     man1   = 0x2F, // 5.3.1
     man2   = 0x2A, // 5.2.0
