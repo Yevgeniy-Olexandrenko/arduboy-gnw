@@ -4,6 +4,8 @@
 
 // Implementation for handheld hardware.
 
+using GNWData = const uint8_t*;
+
 class GameAndWatch : public SharpSM5A::IO
 {
     enum Signal { GND, VCC, MCU_R2, MCU_R3, MCU_R4 };
@@ -47,7 +49,7 @@ public:
 public:
     GameAndWatch(Handler* handler);
 
-    void PowerOn(const uint8_t* controls, const uint8_t* firmware);
+    void PowerOn(GNWData controls, GNWData firmware);
     void SetControl(Control control, bool active);
 
     void Clock();

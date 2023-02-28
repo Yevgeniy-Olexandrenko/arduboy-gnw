@@ -10,7 +10,7 @@ GameAndWatch::GameAndWatch(Handler* handler)
     memset(m_lcd.segForStore, 0, sizeof(m_lcd.segForStore));
 }
 
-void GameAndWatch::PowerOn(const uint8_t* controls, const uint8_t* firmware)
+void GameAndWatch::PowerOn(GNWData controls, GNWData firmware)
 {
     for (int i = 0; i < Control::count; ++i)
     {

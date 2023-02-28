@@ -6,8 +6,6 @@
 // An engine that emulates Game And Watch
 // hardware using the Arduboy software library.
 
-using GNWData = const uint8_t*;
-
 class ArduboyGNW : public GameAndWatch::Handler
 {
 public:
@@ -16,14 +14,17 @@ public:
     void begin();
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
 
+    bool anyButtonPressed() const;
     void setInput(GameAndWatch::Control control, bool active);
     void clearInput();
-
+    
     bool segmentVisible(int h, int o, int s) const;
     bool segmentVisible(int i) const;
     
     bool nextFrame();
     void drawLCD();
+
+    uint8_t updateState(uint8_t nextState);
 
 public: // GameAndWatch::Handler
     void SetBuzzerLevel(bool level) override;
@@ -38,6 +39,8 @@ private:
     GNWData m_segments;
     GNWData m_graphics;
     GNWData m_sprites;
+    uint8_t m_state;
+    uint8_t m_lock;
 
     // game and watch related stuff
     GameAndWatch m_gnw;

@@ -14,6 +14,8 @@ ArduboyGNW::ArduboyGNW(Arduboy2Base& arduboy)
     , m_segments(nullptr)
     , m_graphics(nullptr)
     , m_sprites(nullptr)
+    , m_state(0)
+    , m_lock(false)
     , m_gnw(this)
 {
     s_gnw  = &m_gnw;
@@ -43,9 +45,14 @@ void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, G
     TIMSK3 = bit(OCIE3A);               // Enable compare match interrupt
 }
 
+bool ArduboyGNW::anyButtonPressed() const
+{
+    return m_arduboy.anyPressed(LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON | A_BUTTON | B_BUTTON);
+}
+
 void ArduboyGNW::setInput(GameAndWatch::Control control, bool active)
 {
-    m_gnw.SetControl(control, active);
+    if (!m_lock) m_gnw.SetControl(control, active);
 }
 
 void ArduboyGNW::clearInput()
@@ -68,7 +75,7 @@ bool ArduboyGNW::segmentVisible(int i) const
 
 bool ArduboyGNW::nextFrame()
 {
-    if (m_arduboy.nextFrame())
+    if (m_state != 0x00 && m_arduboy.nextFrame())
     {
         return m_gnw.HasNewFrame();
     }
@@ -80,6 +87,25 @@ void ArduboyGNW::drawLCD()
     m_arduboy.invert(true);
     DrawGraphics();
     DrawSegments();
+}
+
+uint8_t ArduboyGNW::updateState(uint8_t nextState)
+{
+    // enter new state
+    if (m_state != nextState)
+    {
+        m_state = nextState;
+        m_lock = true;
+        clearInput();
+    }
+
+    // unlock player input
+    if (m_lock && !anyButtonPressed())
+    {
+        m_lock = false;
+    }
+
+    return m_state;
 }
 
 // -----------------------------------------------------------------------------
