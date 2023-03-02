@@ -162,7 +162,7 @@ void SharpSM5A::IncrementDivider()
     // 1S(gamma) signal on overflow(falling edge of F1)
     if (m_div == 0) m_gamma = true;
 
-    //	update lcd every 15.625 ms
+    // update lcd every 15.625 ms
     if ((m_div & 0x01FF) == 0)
     {
         for (int o = 0; o < k_mcuLcdOCount; ++o)

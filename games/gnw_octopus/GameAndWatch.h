@@ -28,7 +28,6 @@ class GameAndWatch : public SharpSM5A::IO
         uint8_t changes;
         uint8_t ssegs[SharpSM5A::k_mcuLcdOCount];
         uint8_t rsegs[SharpSM5A::k_mcuLcdOCount];
-        bool newFrame;
     };
 
 public:
@@ -56,7 +55,6 @@ public:
     bool IsReset() const;
     bool IsPowerDown() const;
 
-    bool HasNewFrame();
     bool IsSegmentVisible(int i) const;
     bool IsSegmentVisible(int h, int o, int s) const;
 

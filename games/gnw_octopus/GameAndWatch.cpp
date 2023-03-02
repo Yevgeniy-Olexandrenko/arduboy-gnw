@@ -33,7 +33,6 @@ void GameAndWatch::PowerOn(GNWData controls, GNWData firmware)
 
     // power on LCD
     memset(m_lcd.rsegs, 0, sizeof(m_lcd.rsegs));
-    m_lcd.newFrame = false;
 }
 
 void GameAndWatch::SetControl(Control control, bool active)
@@ -57,13 +56,6 @@ bool GameAndWatch::IsReset() const
 bool GameAndWatch::IsPowerDown() const
 {
     return m_mcu.IsInStandbyMode();
-}
-
-bool GameAndWatch::HasNewFrame()
-{
-    bool value = m_lcd.newFrame;
-    m_lcd.newFrame = false;
-    return value;
 }
 
 bool GameAndWatch::IsSegmentVisible(int i) const
@@ -163,7 +155,6 @@ void GameAndWatch::UpdateLCD(int o, uint8_t segments)
     if (o == SharpSM5A::k_mcuLcdOCount - 1 && !m_lcd.changes)
     {
         memcpy(m_lcd.rsegs, m_lcd.ssegs, sizeof(m_lcd.rsegs));
-        m_lcd.newFrame = true;
     }
 }
 

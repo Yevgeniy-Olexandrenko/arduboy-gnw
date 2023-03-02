@@ -25,7 +25,7 @@ void ArduboyGNW::begin()
 {
     m_arduboy.begin();
     m_arduboy.audio.begin();
-    m_arduboy.setFrameRate(16);
+    m_arduboy.setFrameRate(15);
 }
 
 void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
@@ -65,11 +65,7 @@ bool ArduboyGNW::segmentVisible(int i) const
 
 bool ArduboyGNW::nextFrame()
 {
-    if (m_state != 0x00 && m_arduboy.nextFrameDEV())
-    {
-        return m_gnw.HasNewFrame();
-    }
-    return false;
+    return (m_state && m_arduboy.nextFrameDEV());
 }
 
 void ArduboyGNW::drawLCD()
