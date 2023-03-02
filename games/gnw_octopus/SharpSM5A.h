@@ -20,7 +20,7 @@ public:
         virtual bool    RdBeta() const = 0;
         virtual uint8_t RdPortK() const = 0;
         virtual void    WrPortR(uint8_t data) = 0;
-        virtual void    WrLCD(int o, uint8_t segments) = 0;
+        virtual void    UpdateLCD(int o, uint8_t segments) = 0;
     };
 
     SharpSM5A(IO* io);

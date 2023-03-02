@@ -6,12 +6,11 @@ GameAndWatch::GameAndWatch(Handler* handler)
     : m_handler(handler)
     , m_mcu(this)
 {
-    memset(m_lcd.segForRender, 0, sizeof(m_lcd.segForRender));
-    memset(m_lcd.segForStore, 0, sizeof(m_lcd.segForStore));
 }
 
 void GameAndWatch::PowerOn(GNWData controls, GNWData firmware)
 {
+    // init controls
     for (int i = 0; i < Control::count; ++i)
     {
         uint8_t config = pgm_read_byte(controls + i);
@@ -28,7 +27,13 @@ void GameAndWatch::PowerOn(GNWData controls, GNWData firmware)
             m_lines[i] = Line(signal, input);
         }
     }
+
+    // power on MCU
     m_mcu.PowerOn(firmware);
+
+    // power on LCD
+    memset(m_lcd.rsegs, 0, sizeof(m_lcd.rsegs));
+    m_lcd.newFrame = false;
 }
 
 void GameAndWatch::SetControl(Control control, bool active)
@@ -61,18 +66,18 @@ bool GameAndWatch::HasNewFrame()
     return value;
 }
 
-bool GameAndWatch::IsSegmentVisible(int h, int o, int s) const
-{
-    int sbit = ((h << 2) | s);
-    return bool((m_lcd.segForRender[o] >> sbit) & 0x01);
-}
-
 bool GameAndWatch::IsSegmentVisible(int i) const
 {
     int o = (i >> 3 & 0x0F);
     int s = (i >> 0 & 0x03);
     int h = (i >> 2 & 0x01);
     return IsSegmentVisible(h, o, s);
+}
+
+bool GameAndWatch::IsSegmentVisible(int h, int o, int s) const
+{
+    int sbit = ((h << 2) | s);
+    return bool((m_lcd.rsegs[o] >> sbit) & 0x01);
 }
 
 // -----------------------------------------------------------------------------
@@ -122,7 +127,6 @@ uint8_t GameAndWatch::RdPortK() const
     for (int i = 0; i < Control::count; ++i)
     {
         const Line& line = m_lines[i];
-        
         if (line.input >= Input::MCU_K1 && line.input <= Input::MCU_K4)
         {
             bool hiLevel = false;
@@ -149,23 +153,17 @@ void GameAndWatch::WrPortR(uint8_t data)
     m_handler->SetBuzzerLevel(data & 0x01);
 }
 
-void GameAndWatch::WrLCD(int o, uint8_t segments)
+void GameAndWatch::UpdateLCD(int o, uint8_t segments)
 {
-    if (o == 0)
-    {
-        m_lcd.changes = 0;
-    }
+    if (o == 0) m_lcd.changes = 0;
 
-    m_lcd.changes |= (m_lcd.segForStore[o] ^ segments);
-    m_lcd.segForStore[o] = segments;
+    m_lcd.changes |= (m_lcd.ssegs[o] ^ segments);
+    m_lcd.ssegs[o] = segments;
 
-    if (o == SharpSM5A::k_mcuLcdOCount - 1)
+    if (o == SharpSM5A::k_mcuLcdOCount - 1 && !m_lcd.changes)
     {
-        if (m_lcd.changes == 0)
-        {
-            memcpy(m_lcd.segForRender, m_lcd.segForStore, sizeof(m_lcd.segForRender));
-            m_lcd.newFrame = true;
-        }
+        memcpy(m_lcd.rsegs, m_lcd.ssegs, sizeof(m_lcd.rsegs));
+        m_lcd.newFrame = true;
     }
 }
 

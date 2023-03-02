@@ -25,7 +25,7 @@ void ArduboyGNW::begin()
 {
     m_arduboy.begin();
     m_arduboy.audio.begin();
-    m_arduboy.setFrameRate(32);
+    m_arduboy.setFrameRate(16);
 }
 
 void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware)
@@ -45,11 +45,6 @@ void ArduboyGNW::powerOn(GNWData controls, GNWData segments, GNWData graphics, G
     TIMSK3 = bit(OCIE3A);               // Enable compare match interrupt
 }
 
-bool ArduboyGNW::anyButtonPressed() const
-{
-    return m_arduboy.anyPressed(LEFT_BUTTON | RIGHT_BUTTON | UP_BUTTON | DOWN_BUTTON | A_BUTTON | B_BUTTON);
-}
-
 void ArduboyGNW::setInput(GameAndWatch::Control control, bool active)
 {
     if (!m_lock) m_gnw.SetControl(control, active);
@@ -63,11 +58,6 @@ void ArduboyGNW::clearInput()
     }
 }
 
-bool ArduboyGNW::segmentVisible(int h, int o, int s) const
-{
-    return m_gnw.IsSegmentVisible(h, 0, s);
-}
-
 bool ArduboyGNW::segmentVisible(int i) const
 {
     return m_gnw.IsSegmentVisible(i);
@@ -75,7 +65,7 @@ bool ArduboyGNW::segmentVisible(int i) const
 
 bool ArduboyGNW::nextFrame()
 {
-    if (m_state != 0x00 && m_arduboy.nextFrame())
+    if (m_state != 0x00 && m_arduboy.nextFrameDEV())
     {
         return m_gnw.HasNewFrame();
     }
@@ -106,6 +96,11 @@ uint8_t ArduboyGNW::updateState(uint8_t nextState)
     }
 
     return m_state;
+}
+
+bool ArduboyGNW::anyButtonPressed() const
+{
+    return (m_arduboy.buttonsState() != 0);
 }
 
 // -----------------------------------------------------------------------------

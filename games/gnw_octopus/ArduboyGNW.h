@@ -14,17 +14,15 @@ public:
     void begin();
     void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
 
-    bool anyButtonPressed() const;
     void setInput(GameAndWatch::Control control, bool active);
     void clearInput();
     
-    bool segmentVisible(int h, int o, int s) const;
     bool segmentVisible(int i) const;
-    
     bool nextFrame();
     void drawLCD();
 
     uint8_t updateState(uint8_t nextState);
+    bool anyButtonPressed() const;
 
 public: // GameAndWatch::Handler
     void SetBuzzerLevel(bool level) override;
