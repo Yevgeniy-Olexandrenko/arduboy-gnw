@@ -78,5 +78,4 @@ void loop()
         gnw.drawLCD();
         arduboy.display();
     }
-    arduboy.idle();
 }

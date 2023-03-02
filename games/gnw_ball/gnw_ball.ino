@@ -3,7 +3,25 @@
 
 Arduboy2Base arduboy;
 ArduboyGNW gnw(arduboy);
-Sprites sprites;
+
+enum State { None = 0x00, Demo, GameA, GameB, Loss };
+
+State detectState()
+{
+    // bool time   = gnw.segmentVisible(int(gnw_octopus_segment::time  ));
+    // bool game_a = gnw.segmentVisible(int(gnw_octopus_segment::game_a));
+    // bool game_b = gnw.segmentVisible(int(gnw_octopus_segment::game_b));
+    // bool death  = gnw.segmentVisible(int(gnw_octopus_segment::death ));
+    // bool man1   = gnw.segmentVisible(int(gnw_octopus_segment::man1  ));
+    // bool man2   = gnw.segmentVisible(int(gnw_octopus_segment::man2  ));
+    // bool man3   = gnw.segmentVisible(int(gnw_octopus_segment::man3  ));
+
+    // if (time && !game_a && !game_b) return State::Demo;
+    // if (!time && death && !man1 && !man2 && !man3) return State::Loss;
+    // if (!time && game_a) return State::GameA;
+    // if (!time && game_b) return State::GameB;
+    return State::None;
+}
 
 void setup()
 {
@@ -19,6 +37,8 @@ void setup()
 
 void loop()
 {
+    gnw.updateState(State::Demo);
+
     gnw.setInput(GameAndWatch::ACL,    arduboy.pressed(UP_BUTTON));
     gnw.setInput(GameAndWatch::TIME,   arduboy.pressed(DOWN_BUTTON));
     gnw.setInput(GameAndWatch::GAME_A, arduboy.pressed(A_BUTTON));
@@ -31,7 +51,4 @@ void loop()
         gnw.drawLCD();
         arduboy.display();
     }
-
-    arduboy.digitalWriteRGB(BLUE_LED, gnw.inGame() ? RGB_ON : RGB_OFF);
-    arduboy.idle();
 }
