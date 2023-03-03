@@ -30,7 +30,7 @@ void setup()
         gnw_ball_controls,
         gnw_ball_segments,
         gnw_ball_graphics,
-        gnw_ball_sprites,
+        gnw_ball_gfxtiles,
         gnw_ball_firmware
     );
 }

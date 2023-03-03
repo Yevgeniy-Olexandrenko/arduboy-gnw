@@ -44,7 +44,7 @@ Compile::Compile(const GNW& gnw)
     , m_segments(-1)
     , m_seg_idx (-1)
     , m_graphics(-1)
-    , m_sprites (-1)
+    , m_gfxtiles(-1)
     , m_firmware(-1)
     , m_fw_fixed(-1)
 {
@@ -71,7 +71,7 @@ bool Compile::CompileAssets()
         }
         m_segments = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_segments", "Segments rendering info"));
         m_graphics = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_graphics", "Graphics rendering info"));
-        m_sprites  = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_sprites",  "Sprites for rendering"));
+        m_gfxtiles = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_gfxtiles", "Tiles for rendering"));
         m_firmware = m_dump.AddSection(new Dump::Array(m_gnw.GetName() + "_firmware", "Firmware dump"));
         if (!m_gnw.GetConfig().firmware[1].empty())
         {
@@ -245,12 +245,16 @@ void Compile::RenderGraphicsSprites()
     }
 }
 
-void Compile::DumpSprite(const Sprite& sprite)
+void Compile::DumpSprite(const Sprite& sprite, bool writeSize)
 {
-    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_sprites]);
+    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_gfxtiles]);
 
-    spritesArray.Append(uint8_t(sprite->GetW()));
-    spritesArray.Append(uint8_t(sprite->GetH()));
+    if (writeSize)
+    {
+        spritesArray.Append(uint8_t(sprite->GetW()));
+        spritesArray.Append(uint8_t(sprite->GetH()));
+    }
+
     for (size_t p = 0; p < sprite->GetH() / 8; ++p)
     {
         for (size_t x = 0; x < sprite->GetW(); ++x)
@@ -271,7 +275,7 @@ void Compile::DumpSprite(const Sprite& sprite)
 
 void Compile::DumpSpritesSection()
 {
-    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_sprites]);
+    auto& spritesArray = static_cast<Dump::Array&>(m_dump[m_gfxtiles]);
 
     for (auto& pair : m_spriteIdToSegmentsSprite)
     {
@@ -279,7 +283,7 @@ void Compile::DumpSpritesSection()
         auto& sprite = pair.second;
 
         m_spriteIdToOffset[spriteId] = spritesArray.GetOffset();
-        DumpSprite(sprite);
+        DumpSprite(sprite, true);
 
 #if SAVE_SPRITES_TO_FILES
         char buf[10]; itoa(spriteId, buf, 16);
@@ -293,7 +297,7 @@ void Compile::DumpSpritesSection()
         auto& sprite = pair.second;
 
         m_spriteIdToOffset[spriteId] = spritesArray.GetOffset();
-        DumpSprite(sprite);
+        DumpSprite(sprite, false);
 
 #if SAVE_SPRITES_TO_FILES
         char buf[10]; itoa(spriteId, buf, 16);

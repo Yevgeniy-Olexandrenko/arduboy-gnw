@@ -35,7 +35,7 @@ private:
 	void CollectSegmentsInfo();
 	void RenderSegmentsSprites();
 	void RenderGraphicsSprites();
-	void DumpSprite(const Sprite& sprite);
+	void DumpSprite(const Sprite& sprite, bool writeSize);
 	void DumpSpritesSection();
 	void DumpSegmentsSection();
 	void DumpGraphicsSection();
@@ -53,7 +53,7 @@ private:
 	int  m_segments;
 	int  m_seg_idx;
 	int  m_graphics;
-	int  m_sprites;
+	int  m_gfxtiles;
 	int  m_firmware;
 	int  m_fw_fixed;
 

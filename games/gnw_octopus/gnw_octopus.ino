@@ -4,6 +4,12 @@
 Arduboy2Base arduboy;
 ArduboyGNW gnw(arduboy);
 
+int ball_r = 10;
+int ball_x = 128 / 2 - ball_r;
+int ball_y = 64  / 2 - ball_r;
+int ball_dx = 1;
+int ball_dy = 1;
+
 enum State { None = 0x00, Demo, GameA, GameB, Loss };
 
 State detectState()
@@ -23,6 +29,17 @@ State detectState()
     return State::None;
 }
 
+void updateBall()
+{
+    if (ball_x <= ball_r || ball_x >= 128 - ball_r - 1) ball_dx = -ball_dx;
+    if (ball_y <= ball_r || ball_y >= 64  - ball_r - 1) ball_dy = -ball_dy;
+
+    ball_x += ball_dx;
+    ball_y += ball_dy;
+
+    arduboy.drawCircle(ball_x, ball_y, ball_r);
+}
+
 void setup()
 {
     gnw.begin();
@@ -30,7 +47,7 @@ void setup()
         gnw_octopus_controls,
         gnw_octopus_segments,
         gnw_octopus_graphics,
-        gnw_octopus_sprites,
+        gnw_octopus_gfxtiles,
         gnw_octopus_firmware
     );
 }
@@ -76,6 +93,7 @@ void loop()
     if (gnw.nextFrame())
     {
         gnw.drawLCD();
+        updateBall();
         arduboy.display();
     }
 }

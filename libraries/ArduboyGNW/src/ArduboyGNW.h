@@ -12,7 +12,7 @@ public:
     ArduboyGNW(Arduboy2Base& arduboy);
 
     void begin();
-    void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData sprites, GNWData firmware);
+    void powerOn(GNWData controls, GNWData segments, GNWData graphics, GNWData gfxtiles, GNWData firmware);
 
     void setInput(GameAndWatch::Control control, bool active);
     void clearInput();
@@ -36,7 +36,7 @@ private:
     Arduboy2Base& m_arduboy;
     GNWData m_segments;
     GNWData m_graphics;
-    GNWData m_sprites;
+    GNWData m_gfxtiles;
     uint8_t m_state;
     uint8_t m_lock;
 
